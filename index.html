@@ -1,0 +1,2701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>// OFFSTAGE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #111111; --surface2: #1a1a1a; --surface3: #222222;
+    --border: #2a2a2a; --border2: #333333; --text: #f0f0f0; --muted: #888888; --dim: #555555;
+    --accent: #b48aff; --accent-dim: rgba(180,138,255,0.14); --accent-text: #0a0a0a;
+    --blue: #4a9eff; --blue-dim: rgba(74,158,255,0.12);
+    --amber: #ffb347; --amber-dim: rgba(255,179,71,0.12);
+    --purple: #d98aff; --purple-dim: rgba(217,138,255,0.12);
+    --teal: #3dd9ac; --teal-dim: rgba(61,217,172,0.12);
+    --red: #ff6b6b; --red-dim: rgba(255,107,107,0.12);
+    --radius: 8px; --radius-lg: 12px;
+    --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+
+  /* ── SHARED TOP BAR ── */
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 1rem; display: flex; align-items: center; gap: 8px;
+    height: 52px; position: sticky; top: 0; z-index: 100;
+    padding-top: env(safe-area-inset-top);
+    height: calc(52px + env(safe-area-inset-top));
+  }
+  .topbar-logo { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--accent); text-transform: uppercase; white-space: nowrap; }
+  .topbar-back { background: none; border: none; color: var(--muted); font-family: var(--mono); font-size: 12px; cursor: pointer; padding: 4px 6px; white-space: nowrap; transition: color .15s; }
+  .topbar-back:hover { color: var(--accent); }
+  .topbar-title { font-size: 13px; font-weight: 500; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar-action {
+    font-size: 11px; cursor: pointer; font-family: var(--font); padding: 5px 10px;
+    border-radius: var(--radius); font-weight: 500; white-space: nowrap; transition: all .15s;
+  }
+  .btn-export { color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent); }
+  .btn-export:hover { background: var(--accent); color: var(--accent-text); }
+  .btn-delete { color: var(--red); background: var(--red-dim); border: 1px solid transparent; }
+  .btn-delete:hover { border-color: var(--red); }
+
+  /* ── HOME ── */
+  #home-screen { display: none; }
+  .home-wrap { max-width: 600px; margin: 0 auto; padding: 1.75rem 1.25rem 4rem; }
+  .home-title { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  .home-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+  .artist-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem; }
+  .artist-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 1rem 1.15rem;
+    cursor: pointer; transition: border-color .15s;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .artist-card:hover { border-color: var(--accent); }
+  .artist-card:active { transform: scale(.985); }
+  .artist-av {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 15px; font-weight: 500; flex-shrink: 0;
+  }
+  .av0 { background: var(--accent-dim); color: var(--accent); }
+  .av1 { background: var(--blue-dim); color: var(--blue); }
+  .av2 { background: var(--purple-dim); color: var(--purple); }
+  .av3 { background: var(--teal-dim); color: var(--teal); }
+  .av4 { background: var(--amber-dim); color: var(--amber); }
+  .artist-card-body { flex: 1; min-width: 0; }
+  .artist-card-name { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .artist-card-meta { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .artist-card-shows { font-size: 11px; color: var(--accent); font-family: var(--mono); margin-top: 3px; }
+  .artist-card-del { background: none; border: none; color: var(--dim); font-size: 18px; cursor: pointer; padding: 6px; flex-shrink: 0; border-radius: 6px; transition: all .15s; }
+  .artist-card-del:hover { color: var(--red); background: var(--red-dim); }
+  .btn-new {
+    width: 100%; padding: 14px; background: none;
+    border: 1.5px dashed var(--border2); border-radius: var(--radius-lg);
+    color: var(--muted); font-family: var(--font); font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: all .15s;
+  }
+  .btn-new:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    display: none; min-height: 100vh;
+    align-items: center; justify-content: center; padding: 2rem;
+    flex-direction: column;
+  }
+  .login-box { width: 100%; max-width: 360px; }
+  .login-logo { font-family: var(--mono); font-size: 11px; letter-spacing: .15em; color: var(--accent); text-transform: uppercase; margin-bottom: 2rem; }
+  .login-title { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+  .login-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 18px; }
+  .artist-select { width: 100%; margin-bottom: 1rem; }
+
+  /* ── LOCATIONS ── */
+  .loc-section { margin-bottom: 1rem; }
+  .loc-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .loc-section-header span { font-size: 15px; font-weight: 600; }
+  .loc-form { background: var(--surface2); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 12px; }
+  .loc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .loc-form-grid input, .loc-form-grid textarea { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 9px 12px; font-family: var(--font); font-size: 14px; color: var(--text); outline: none; }
+  .loc-form-grid input:focus, .loc-form-grid textarea:focus { border-color: var(--accent); }
+  .loc-form-grid textarea { resize: vertical; }
+  .loc-span2 { grid-column: span 2; }
+  .loc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; position: relative; }
+  .loc-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .loc-card-name { font-size: 15px; font-weight: 600; }
+  .venue-day-header { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 14px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .venue-day-header:first-child { margin-top: 0; }
+  .loc-card-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 16px; padding: 0; flex-shrink: 0; }
+  .loc-card-del:hover { color: var(--red); }
+  .loc-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+  .loc-field { }
+  .loc-field-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); margin-bottom: 2px; font-family: var(--mono); }
+  .loc-field-val { font-size: 13px; color: var(--text); }
+  .loc-field.full { grid-column: span 2; }
+  .loc-notes { font-size: 12px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.5; }
+
+  /* ── GUEST LIST ── */
+  .gl-summary { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .gl-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .gl-stat span { font-size: 16px; font-weight: 500; display: block; }
+  .gl-stat .gl-ga  { color: var(--blue); }
+  .gl-stat .gl-aa  { color: var(--amber); }
+  .gl-stat .gl-vip { color: var(--accent); }
+  .gl-stat .gl-tot { color: var(--text); }
+  .gl-table { width: 100%; border-collapse: collapse; }
+  .gl-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border2); }
+  .gl-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .gl-table tr:last-child td { border-bottom: none; }
+  .gl-table tr:hover td { background: var(--surface2); }
+  .gl-tier { font-family: var(--mono); font-size: 10px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; font-weight: 500; }
+  .tier-ga  { background: var(--blue-dim);   color: var(--blue); }
+  .tier-aa  { background: var(--amber-dim);  color: var(--amber); }
+  .tier-vip { background: var(--accent-dim); color: var(--accent); }
+  .gl-status { font-size: 11px; font-family: var(--mono); }
+  .st-confirmed { color: var(--teal); }
+  .st-pending   { color: var(--amber); }
+  .st-denied    { color: var(--red); }
+  .gl-note-cell { font-size: 11px; color: var(--muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gl-actions { display: flex; gap: 4px; white-space: nowrap; }
+  .gl-edit-btn { background: none; border: none; color: var(--dim); font-size: 12px; cursor: pointer; padding: 3px 5px; border-radius: 4px; font-family: var(--mono); transition: color .15s; }
+  .gl-edit-btn:hover { color: var(--accent); }
+  .gl-del-btn  { background: none; border: none; color: var(--dim); font-size: 14px; cursor: pointer; padding: 3px 5px; border-radius: 4px; transition: color .15s; }
+  .gl-del-btn:hover { color: var(--red); }
+  /* Artist can add guests — show add-row but hide del/edit */
+  .readonly .gl-del-btn  { display: none !important; }
+  .readonly .gl-edit-btn { display: none !important; }
+  /* Artist note edit inline */
+  .gl-note-edit { display: flex; gap: 6px; align-items: center; }
+  .gl-note-edit input { flex: 1; background: var(--surface); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; font-size: 12px; color: var(--text); font-family: var(--font); outline: none; }
+  /* Artist add row stays visible */
+  .readonly .gl-add-row { display: flex !important; }
+
+
+  /* ── FLIGHTS ── */
+  .flight-day-hdr { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .flight-day-hdr:first-child { margin-top: 0; }
+  .flight-day-hdr::before { content: ''; width: 14px; height: 1px; background: var(--dim); }
+  .flight-day-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .flight-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; position: relative; }
+  .flight-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .flight-pax { font-size: 13px; font-weight: 600; color: var(--accent); font-family: var(--mono); }
+  .flight-airline { font-size: 13px; font-weight: 600; }
+  .flight-route { display: flex; align-items: center; gap: 14px; margin: 8px 0; }
+  .flight-end { text-align: center; }
+  .flight-airport { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--text); letter-spacing: .05em; }
+  .flight-time { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .flight-arrow { flex: 1; height: 1px; background: var(--border2); position: relative; min-width: 30px; }
+  .flight-arrow::after { content: '✈'; position: absolute; right: -2px; top: -9px; color: var(--accent); font-size: 13px; }
+  .flight-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .flight-conf { color: var(--accent); }
+  .flight-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .flight-edit-btn { background: none; border: none; color: var(--dim); font-size: 12px; cursor: pointer; padding: 3px 5px; border-radius: 4px; font-family: var(--mono); transition: color .15s; }
+  .flight-edit-btn:hover { color: var(--accent); }
+  .flight-del-btn { background: none; border: none; color: var(--dim); font-size: 16px; cursor: pointer; padding: 0 4px; transition: color .15s; }
+  .flight-del-btn:hover { color: var(--red); }
+
+  @media(max-width:500px) { .loc-form-grid { grid-template-columns: 1fr; } .loc-span2 { grid-column: span 1; } .loc-fields { grid-template-columns: 1fr; } .loc-field.full { grid-column: span 1; } }
+
+  /* ── READ-ONLY MODE ── */
+  .readonly .btn-add, .readonly .btn-delete, .readonly .sched-del, .readonly .sched-edit-btn,
+  .readonly .contact-del, .readonly .task-del, .readonly .note-del,
+  .readonly .ros-del, .readonly .artist-card-del, .readonly .show-card-del,
+  .readonly #btn-new-artist, .readonly .add-row, .readonly .divider ~ *,
+  .readonly .loc-form-grid,
+  .readonly .topbar-action.btn-delete { display: none !important; }
+  .readonly .tab[onclick*="tasks"] { display: none !important; }
+  .readonly .add-row.gl-add-row { display: flex !important; }
+  .readonly .gl-add-row .btn-add { display: block !important; }
+  .readonly #note-input { display: block !important; }
+  .readonly .gl-add-row input, .readonly .gl-add-row select, .readonly .gl-add-row textarea { display: block !important; }
+  .readonly .topbar-back-artists { pointer-events: none; opacity: 0; }
+  .readonly #crew-list .task-check, .readonly #crew-list .task-text { pointer-events: none; }
+  .readonly .btn-signout { display: flex !important; }
+
+  /* ── NEW ARTIST FORM (inline on home) ── */
+  #new-artist-form {
+    display: none; background: var(--surface); border: 1px solid var(--accent);
+    border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.25rem;
+  }
+  .naf-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .naf-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .naf-row input {
+    flex: 1; min-width: 140px; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 10px 14px; font-family: var(--font);
+    font-size: 14px; color: var(--text); outline: none; transition: border-color .15s;
+  }
+  .naf-row input:focus { border-color: var(--accent); }
+  .naf-actions { display: flex; gap: 8px; }
+  .naf-actions .btn-primary { flex: 1; }
+
+  /* ── ARTIST SCREEN (shows list) ── */
+  #artist-screen { display: none; }
+  .artist-wrap { max-width: 600px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+  .show-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem; }
+  .show-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 1rem 1.15rem;
+    cursor: pointer; transition: border-color .15s;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .show-card:hover { border-color: var(--accent); }
+  .show-card:active { transform: scale(.985); }
+  .show-card-left { flex: 1; min-width: 0; }
+  .show-card-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .show-card-meta { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .show-card-del { background: none; border: none; color: var(--dim); font-size: 18px; cursor: pointer; padding: 6px; flex-shrink: 0; border-radius: 6px; transition: all .15s; }
+  .show-card-del:hover { color: var(--red); background: var(--red-dim); }
+  .show-card-edit { background: none; border: none; color: var(--dim); font-size: 14px; cursor: pointer; padding: 6px; flex-shrink: 0; border-radius: 6px; transition: all .15s; font-family: var(--mono); }
+  .show-card-edit:hover { color: var(--accent); background: var(--accent-dim); }
+  .show-edit-form {
+    display: none; background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: var(--radius-lg); padding: 1.25rem; margin-top: 10px;
+  }
+  .sef-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .sef-grid input, .sef-grid select { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 9px 12px; font-family: var(--font); font-size: 14px; color: var(--text); outline: none; width: 100%; }
+  .sef-grid input:focus, .sef-grid select:focus { border-color: var(--accent); }
+  .sef-span2 { grid-column: span 2; }
+  .sef-actions { display: flex; gap: 8px; }
+  .sef-actions .btn-primary { flex: 1; margin-top: 0; }
+
+  @media(max-width:500px) { .sef-grid { grid-template-columns: 1fr; } .sef-span2 { grid-column: span 1; } }
+
+  /* ── SETUP (new show form) ── */
+  #setup-screen { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 2rem; }
+  .setup-box { width: 100%; max-width: 480px; }
+  .setup-title { font-size: 24px; font-weight: 600; line-height: 1.2; margin-bottom: 8px; }
+  .setup-sub { color: var(--muted); font-size: 14px; margin-bottom: 2rem; line-height: 1.6; }
+  .field-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
+  .field-group { margin-bottom: 1.25rem; }
+  input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="password"] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 10px 14px; font-family: var(--font);
+    font-size: 14px; color: var(--text); outline: none; transition: border-color .15s;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="password"]:focus { border-color: var(--accent); }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-primary {
+    width: 100%; background: var(--accent); color: var(--accent-text); border: none;
+    border-radius: var(--radius); padding: 12px 20px; font-family: var(--font);
+    font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity .15s;
+  }
+  .btn-primary:hover { opacity: .85; }
+  .btn-sm {
+    background: var(--surface2); color: var(--muted); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 10px 16px; font-family: var(--font);
+    font-size: 13px; cursor: pointer; transition: color .15s;
+  }
+  .btn-sm:hover { color: var(--text); }
+
+  /* ── APP (dashboard) ── */
+  #app { display: none; }
+  .stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .stat { background: var(--surface); padding: 14px 16px; text-align: center; }
+  .stat-num { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--accent); }
+  .stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-top: 3px; }
+
+  .tabs-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs-bar::-webkit-scrollbar { display: none; }
+  .tab { padding: 13px 18px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s, border-color .15s; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font); }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  .content { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .day-tabs { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .dtab { padding: 5px 12px; font-size: 12px; font-family: var(--mono); cursor: pointer; border: 1px solid var(--border2); border-radius: 4px; background: none; color: var(--muted); transition: all .15s; }
+  .dtab:hover { color: var(--text); border-color: var(--dim); }
+  .dtab.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .card-header { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 12px; }
+
+  .sched-row { display: flex; align-items: flex-start; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .sched-row:last-child { border-bottom: none; }
+  .sched-time { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 46px; padding-top: 2px; }
+  .sched-body { flex: 1; min-width: 0; }
+  .sched-title { font-size: 13px; font-weight: 500; }
+  .sched-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .sched-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .sched-del:hover { color: var(--red); }
+  .sched-edit-btn { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 12px; padding: 0 4px; font-family: var(--mono); transition: color .15s; }
+  .sched-edit-btn:hover { color: var(--accent); }
+  .sched-row { cursor: default; }
+  .sched-row-editing { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px !important; margin: 4px 0; }
+  .sched-inline-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 1; }
+  .sched-inline-form input, .sched-inline-form select {
+    background: var(--surface); border: 1px solid var(--accent); border-radius: 6px;
+    padding: 5px 9px; font-family: var(--font); font-size: 13px; color: var(--text);
+    outline: none;
+  }
+  .sched-inline-form input.f-time  { width: 90px; }
+  .sched-inline-form input.f-title { flex: 1; min-width: 120px; }
+  .sched-inline-form input.f-note  { flex: 1; min-width: 100px; }
+  .sched-inline-form select.f-badge { width: 80px; }
+  .sched-save-btn { background: var(--accent); color: var(--accent-text); border: none; border-radius: 6px; padding: 5px 12px; font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .sched-cancel-btn { background: none; border: 1px solid var(--border2); color: var(--muted); border-radius: 6px; padding: 5px 10px; font-family: var(--font); font-size: 12px; cursor: pointer; }
+
+  .badge { display: inline-block; font-size: 9px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; padding: 2px 6px; border-radius: 3px; margin-left: 6px; }
+  .b-show { background: var(--accent-dim); color: var(--accent); }
+  .b-travel { background: var(--blue-dim); color: var(--blue); }
+  .b-hotel { background: var(--purple-dim); color: var(--purple); }
+  .b-prod { background: var(--amber-dim); color: var(--amber); }
+  .b-off { background: var(--surface3); color: var(--muted); }
+  .b-meal { background: var(--teal-dim); color: var(--teal); }
+  .b-media { background: var(--red-dim); color: var(--red); }
+  .b-other { background: var(--surface3); color: var(--muted); }
+
+  .add-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .add-row input, .add-row select { flex: 1; min-width: 80px; }
+  select { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 14px; font-family: var(--font); font-size: 14px; color: var(--text); outline: none; cursor: pointer; }
+  select option { background: var(--surface2); }
+  .btn-add { background: var(--surface3); color: var(--text); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 16px; font-family: var(--font); font-size: 13px; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  .btn-add:hover { background: var(--border2); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+  .section-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 10px; }
+  .empty-state { font-size: 13px; color: var(--dim); padding: 1.5rem 0; text-align: center; }
+
+  .contact-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 10px; margin-bottom: 10px; }
+  .contact-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px; }
+  .contact-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .contact-name { font-size: 13px; font-weight: 500; }
+  .contact-role { font-size: 11px; color: var(--muted); }
+  .contact-detail { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .contact-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 0; }
+  .contact-del:hover { color: var(--red); }
+
+  .task-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .task-item:last-child { border-bottom: none; }
+  .task-check { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; flex-shrink: 0; transition: all .15s; }
+  .task-check.done { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .task-text { flex: 1; font-size: 13px; cursor: pointer; }
+  .task-text.done { text-decoration: line-through; color: var(--dim); }
+  .task-day { font-size: 10px; color: var(--dim); font-family: var(--mono); white-space: nowrap; }
+  .task-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .task-del:hover { color: var(--red); }
+
+  textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 14px; font-family: var(--font); font-size: 14px; color: var(--text); outline: none; resize: vertical; min-height: 80px; transition: border-color .15s; }
+  textarea:focus { border-color: var(--accent); }
+  .note-entry { padding: 10px 0; border-bottom: 1px solid var(--border); position: relative; padding-right: 28px; }
+  .note-entry:last-child { border-bottom: none; }
+  .note-meta { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 4px; }
+  .note-body { font-size: 13px; line-height: 1.5; color: var(--text); white-space: pre-wrap; }
+  .note-del { position: absolute; top: 10px; right: 0; background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; }
+  .note-del:hover { color: var(--red); }
+
+  /* ROS */
+  .ros-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .ros-item:last-child { border-bottom: none; }
+  .ros-time-range { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 130px; padding-top: 2px; white-space: nowrap; line-height: 1.5; }
+  .ros-duration { display: block; font-size: 10px; color: var(--dim); margin-top: 2px; }
+  .ros-body { flex: 1; min-width: 0; }
+  .ros-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ros-sub { font-size: 12px; color: var(--muted); }
+  .ros-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 0 4px; flex-shrink: 0; }
+  .ros-del:hover { color: var(--red); }
+  .ros-dash { color: var(--muted); font-size: 14px; align-self: center; flex-shrink: 0; }
+  .rt-headliner { background: var(--accent-dim); color: var(--accent); }
+  .rt-opener    { background: var(--teal-dim); color: var(--teal); }
+  .rt-changeover{ background: var(--amber-dim); color: var(--amber); }
+  .rt-doors     { background: var(--blue-dim); color: var(--blue); }
+  .rt-curfew    { background: var(--red-dim); color: var(--red); }
+  .rt-other     { background: var(--surface3); color: var(--muted); }
+
+  /* MODAL */
+  #export-modal { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+  .modal-box { position: relative; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 380px; z-index: 1; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+  .export-checks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+  .export-check { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+  .export-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions .btn-primary { flex: 1; margin-top: 0; }
+
+
+  @media(max-width:500px) {
+    .stat-row { grid-template-columns: repeat(2,1fr); }
+    .add-row { flex-direction: column; }
+    .add-row input, .add-row select, .btn-add { width: 100%; }
+    input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="password"], select, textarea { font-size: 16px !important; }
+    .naf-row input { font-size: 16px !important; }
+    .tab { padding: 14px 16px; }
+    .btn-add, .btn-primary { min-height: 44px; font-size: 16px; }
+    .sched-del, .contact-del, .task-del, .note-del, .ros-del {
+      min-width: 36px; min-height: 36px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .task-check { width: 22px; height: 22px; font-size: 13px; }
+    .content { padding: 1rem 0.75rem 5rem; }
+    .topbar { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+    .home-wrap, .artist-wrap { padding-left: 1rem; padding-right: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="login-screen" style="display:flex">
+  <div class="login-box">
+    <div class="login-logo">// OFFSTAGE</div>
+    <h1 class="login-title">Welcome back</h1>
+    <p class="login-sub">Sign in to access your dashboard.</p>
+    <p style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:1rem">build v21 · 2026-05-23</p>
+    <div class="field-group">
+      <label class="field-label">Email</label>
+      <input type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn-primary" onclick="doLogin()">Sign in →</button>
+  </div>
+</div>
+
+<!-- ═══ HOME SCREEN ═══ -->
+<div id="home-screen">
+  <div class="topbar">
+    <div class="topbar-logo">// OFFSTAGE</div>
+    <div style="flex:1"></div>
+    <button class="topbar-action btn-sm" onclick="logout()" style="font-size:11px;padding:5px 10px">Sign out</button>
+  </div>
+  <div class="home-wrap">
+    <h1 class="home-title">Your Artists</h1>
+    <p class="home-sub">Tap an artist to manage their shows.</p>
+    <div class="artist-list" id="artist-list"></div>
+    <div id="new-artist-form">
+      <div class="naf-title">Add new artist</div>
+      <div class="naf-row">
+        <input type="text" id="naf-name" placeholder="Artist name (e.g. G-REX)">
+      </div>
+      <div class="naf-row">
+        <input type="text" id="naf-tm" placeholder="Your name / TM name">
+      </div>
+      <div class="naf-actions">
+        <button class="btn-primary" onclick="submitNewArtist()">Add artist →</button>
+        <button class="btn-sm" onclick="hideNewArtistForm()">Cancel</button>
+      </div>
+    </div>
+    <button class="btn-new" id="btn-new-artist" onclick="showNewArtistForm()">+ Add New Artist</button>
+  </div>
+</div>
+
+<!-- ═══ ARTIST SCREEN (shows list) ═══ -->
+<div id="artist-screen">
+  <div class="topbar">
+    <button class="topbar-back topbar-back-artists" onclick="goHome()">← Artists</button>
+    <div class="topbar-title" id="artist-screen-name"></div>
+    <button class="topbar-action btn-export" onclick="showEditArtistForm()" style="font-size:11px">✏ Edit</button>
+    <button class="topbar-action btn-sm btn-signout" onclick="logout()" style="font-size:11px;padding:5px 10px">Sign out</button>
+  </div>
+  <div class="artist-wrap">
+    <div id="edit-artist-form" style="display:none;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem">
+      <div class="naf-title">Edit Artist</div>
+      <div class="naf-row">
+        <input type="text" id="eaf-name" placeholder="Artist name">
+      </div>
+      <div class="naf-row">
+        <input type="text" id="eaf-tm" placeholder="TM name">
+      </div>
+      <div class="naf-actions">
+        <button class="btn-primary" onclick="submitEditArtist()">Save →</button>
+        <button class="btn-sm" onclick="hideEditArtistForm()">Cancel</button>
+      </div>
+    </div>
+    <p class="home-sub" style="margin-top:.5rem">Select a show or add a new one.</p>
+    <div class="show-list" id="show-list"></div>
+    <button class="btn-new" onclick="showNewShowForm()">+ Add New Show</button>
+  </div>
+</div>
+
+<!-- ═══ SETUP SCREEN (new show form) ═══ -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <button class="topbar-back" onclick="setupBack()" style="margin-bottom:1rem;padding:0">← Back</button>
+    <h1 class="setup-title">New Show</h1>
+    <p class="setup-sub">Fill in the details. Show day will auto-populate with a default schedule and task checklist.</p>
+    <div class="field-group">
+      <label class="field-label">Show / Tour name</label>
+      <input type="text" id="s-name" placeholder="e.g. G-REX — Denver Run">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Artist</label>
+      <input type="text" id="s-artist" placeholder="e.g. G-REX">
+    </div>
+    <div class="row-2">
+      <div class="field-group">
+        <label class="field-label">Start date</label>
+        <input type="date" id="s-start">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Number of days</label>
+        <input type="number" id="s-days" min="1" max="30" value="3">
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Show day</label>
+      <input type="date" id="s-show">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Your name (TM)</label>
+      <input type="text" id="s-tm" placeholder="e.g. Isaiah">
+    </div>
+    <button class="btn-primary" onclick="launch()">Build Dashboard →</button>
+  </div>
+</div>
+
+<!-- ═══ APP (dashboard) ═══ -->
+<div id="app">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goToArtist()">← Shows</button>
+    <div class="topbar-title" id="tb-title">—</div>
+    <button class="topbar-action btn-export" onclick="openExportModal()">⬇ PDF</button>
+    <button class="topbar-action btn-delete" onclick="deleteCurrentShow()">🗑</button>
+    <button class="topbar-action btn-sm btn-signout" onclick="logout()" style="font-size:11px;padding:5px 10px">Sign out</button>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-num" id="s-days-display">—</div><div class="stat-lbl">Days</div></div>
+    <div class="stat"><div class="stat-num" id="s-show-display">—</div><div class="stat-lbl">Show date</div></div>
+    <div class="stat"><div class="stat-num" id="s-tasks-display">—</div><div class="stat-lbl">Tasks done</div></div>
+    <div class="stat"><div class="stat-num" id="s-contacts-display">—</div><div class="stat-lbl">Contacts</div></div>
+  </div>
+  <div class="tabs-bar">
+    <button class="tab active" onclick="switchTab('itinerary',this)">Itinerary</button>
+    <button class="tab" onclick="switchTab('ros',this)">Run of Show</button>
+    <button class="tab" onclick="switchTab('locations',this)">Locations</button>
+    <button class="tab" onclick="switchTab('contacts',this)">Contacts</button>
+    <button class="tab" onclick="switchTab('tasks',this)">Tasks</button>
+    <button class="tab" onclick="switchTab('notes',this)">Notes</button>
+    <button class="tab" onclick="switchTab('guestlist',this)">Guest List</button>
+    <button class="tab" onclick="switchTab('flights',this)">Flights</button>
+  </div>
+  <div class="content">
+    <div id="itinerary" class="panel active">
+      <div class="day-tabs" id="day-tabs"></div>
+      <div id="day-panels"></div>
+    </div>
+    <div id="ros" class="panel">
+      <div class="card">
+        <div class="card-header">Run of Show — Set times &amp; changeovers</div>
+        <div id="ros-list"><div class="empty-state">No items yet.</div></div>
+      </div>
+      <div class="add-row" style="margin-top:10px">
+        <input id="ros-time-start" type="text" placeholder="Start (e.g. 9:00pm)" style="max-width:130px">
+        <span class="ros-dash">–</span>
+        <input id="ros-time-end" type="text" placeholder="End (e.g. 9:45pm)" style="max-width:130px">
+        <input id="ros-title" type="text" placeholder="Act / event">
+        <input id="ros-note" type="text" placeholder="Note (optional)" style="max-width:180px">
+        <select id="ros-type" style="max-width:140px">
+          <option value="rt-headliner">Headliner</option>
+          <option value="rt-opener">Opener</option>
+          <option value="rt-changeover">Changeover</option>
+          <option value="rt-doors">Doors</option>
+          <option value="rt-curfew">Curfew</option>
+          <option value="rt-other">Other</option>
+        </select>
+        <button class="btn-add" onclick="addRosItem()">Add</button>
+      </div>
+    </div>
+    <!-- LOCATIONS -->
+    <div id="locations" class="panel">
+
+      <!-- VENUE -->
+      <div class="loc-section">
+        <div class="loc-section-header">
+          <span>🏟 Venue</span>
+          <button class="btn-add" onclick="toggleLocForm('venue-form')">+ Add</button>
+        </div>
+        <div id="venue-form" class="loc-form" style="display:none">
+          <div class="loc-form-grid">
+            <input id="vn-name"     placeholder="Venue name" class="loc-span2">
+            <select id="vn-day" class="loc-span2"></select>
+            <input id="vn-address"  placeholder="Address" class="loc-span2">
+            <input id="vn-contact"  placeholder="Venue contact name">
+            <input id="vn-phone"    placeholder="Contact phone / email">
+            <input id="vn-loadin"   placeholder="Load-in time (e.g. 2:00pm)">
+            <input id="vn-capacity" placeholder="Capacity">
+            <input id="vn-parking"  placeholder="Parking info">
+            <input id="vn-greenrm"  placeholder="Green room location">
+            <input id="vn-stage"    placeholder="Stage specs (e.g. 40x30, 20ft fly)" class="loc-span2">
+            <textarea id="vn-notes" placeholder="Notes…" class="loc-span2" rows="2"></textarea>
+          </div>
+          <div class="add-row" style="margin-top:8px">
+            <button class="btn-primary" style="max-width:140px" onclick="addVenue()">Save Venue</button>
+            <button class="btn-sm" onclick="toggleLocForm('venue-form')">Cancel</button>
+          </div>
+        </div>
+        <div id="venue-list"></div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- LODGING -->
+      <div class="loc-section">
+        <div class="loc-section-header">
+          <span>🏨 Lodging</span>
+          <button class="btn-add" onclick="toggleLocForm('lodging-form')">+ Add</button>
+        </div>
+        <div id="lodging-form" class="loc-form" style="display:none">
+          <div class="loc-form-grid">
+            <input id="lg-name"    placeholder="Hotel / Airbnb name" class="loc-span2">
+            <input id="lg-address" placeholder="Address" class="loc-span2">
+            <input id="lg-checkin"  placeholder="Check-in (date & time)">
+            <input id="lg-checkout" placeholder="Check-out (date & time)">
+            <input id="lg-conf"    placeholder="Confirmation #" class="loc-span2">
+            <textarea id="lg-notes" placeholder="Notes (WiFi, room #, parking…)" class="loc-span2" rows="2"></textarea>
+          </div>
+          <div class="add-row" style="margin-top:8px">
+            <button class="btn-primary" style="max-width:140px" onclick="addLodging()">Save Lodging</button>
+            <button class="btn-sm" onclick="toggleLocForm('lodging-form')">Cancel</button>
+          </div>
+        </div>
+        <div id="lodging-list"></div>
+      </div>
+
+    </div>
+
+    <div id="contacts" class="panel">
+      <div class="section-label">Contacts</div>
+      <div class="contact-grid" id="contact-grid"></div>
+      <hr class="divider">
+      <div class="section-label">Add contact</div>
+      <div class="add-row">
+        <input id="c-name" placeholder="Name">
+        <input id="c-role" placeholder="Role (FOH, Venue PM…)">
+        <input id="c-phone" placeholder="Phone / email">
+        <button class="btn-add" onclick="addContact()">Add</button>
+      </div>
+      <hr class="divider">
+      <div class="section-label">Crew</div>
+      <div id="crew-list"></div>
+      <div class="add-row" style="margin-top:8px">
+        <input id="cr-name" placeholder="Name">
+        <input id="cr-role" placeholder="Role (Tour Mgr, Audio, Lighting…)">
+        <button class="btn-add" onclick="addCrew()">Add</button>
+      </div>
+    </div>
+    <div id="tasks" class="panel">
+      <div class="day-tabs" id="task-filter-chips"></div>
+      <div class="card">
+        <div class="card-header">Tasks</div>
+        <div id="task-list"></div>
+      </div>
+      <div class="add-row" style="margin-top:10px">
+        <input id="new-task" placeholder="New task…">
+        <select id="task-day-sel" style="max-width:160px"></select>
+        <button class="btn-add" onclick="addTask()">Add</button>
+      </div>
+    </div>
+    <div id="notes" class="panel">
+      <div class="card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span>Notes</span>
+          <select id="note-filter-sel" onchange="renderNotes()" style="max-width:150px;font-size:12px"></select>
+        </div>
+        <div id="notes-list"></div>
+      </div>
+      <textarea id="note-input" placeholder="Add a note…" style="margin-top:10px"></textarea>
+      <div class="add-row gl-add-row" style="margin-top:8px">
+        <select id="note-day-sel" style="max-width:160px"></select>
+        <button class="btn-add" onclick="saveNote()">Save note</button>
+      </div>
+    </div>
+
+    <div id="guestlist" class="panel">
+      <div class="gl-summary" id="gl-summary"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="gl-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Tier</th>
+              <th>Status</th>
+              <th>Note</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="gl-tbody"></tbody>
+        </table>
+      </div>
+      <!-- Add guest row — visible to both TM and artist -->
+      <div class="add-row gl-add-row" style="margin-top:10px">
+        <input id="gl-first" placeholder="First name">
+        <input id="gl-last"  placeholder="Last name">
+        <select id="gl-tier" style="max-width:90px">
+          <option value="ga">GA</option>
+          <option value="aa">AA</option>
+          <option value="vip">VIP</option>
+        </select>
+        <select id="gl-status" style="max-width:120px">
+          <option value="confirmed">Confirmed</option>
+          <option value="pending">Pending</option>
+          <option value="denied">Denied</option>
+        </select>
+        <input id="gl-note" placeholder="Note (optional)">
+        <button class="btn-add" onclick="addGuest()">Add</button>
+      </div>
+    </div>
+
+    <div id="flights" class="panel">
+      <div id="flights-list"></div>
+      <div class="loc-form-grid" style="margin-top:10px">
+        <input id="fl-date" type="date" class="loc-span2">
+        <input id="fl-pax"     placeholder="Passenger (e.g. Isaiah)">
+        <input id="fl-airline" placeholder="Airline + flight # (e.g. United UA1234)">
+        <input id="fl-from"    placeholder="From airport (e.g. ORD)">
+        <input id="fl-to"      placeholder="To airport (e.g. DEN)">
+        <input id="fl-depart"  placeholder="Departs (e.g. Jun 10, 11:45a)">
+        <input id="fl-arrive"  placeholder="Arrives (e.g. Jun 10, 1:32p)">
+        <input id="fl-conf"    placeholder="Confirmation #" class="loc-span2">
+        <input id="fl-note"    placeholder="Note (seat, terminal, etc.)" class="loc-span2">
+      </div>
+      <div class="add-row" style="margin-top:8px">
+        <button class="btn-add" onclick="addFlight()">Add flight</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT MODAL -->
+  <div id="export-modal" style="display:none">
+    <div class="modal-backdrop" onclick="closeExportModal()"></div>
+    <div class="modal-box">
+      <div class="modal-title">Export Itinerary PDF</div>
+      <div class="modal-sub">Choose what to include.</div>
+      <div class="export-checks">
+        <label class="export-check"><input type="checkbox" id="ex-itinerary" checked> Daily Itinerary</label>
+        <label class="export-check"><input type="checkbox" id="ex-ros" checked> Run of Show</label>
+        <label class="export-check"><input type="checkbox" id="ex-locations" checked> Locations</label>
+        <label class="export-check"><input type="checkbox" id="ex-flights" checked> Flights</label>
+        <label class="export-check"><input type="checkbox" id="ex-contacts" checked> Contacts</label>
+        <label class="export-check"><input type="checkbox" id="ex-tasks"> Tasks</label>
+        <label class="export-check"><input type="checkbox" id="ex-notes"> Notes</label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="generatePDF()">Generate PDF →</button>
+        <button class="btn-sm" onclick="closeExportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+/* ============================================================================
+   // OFFSTAGE — Tour Manager Dashboard
+   ----------------------------------------------------------------------------
+   Single-file web app. Runs on GitHub Pages, data stored in Firebase Firestore.
+
+   ARCHITECTURE (top to bottom in this file):
+     1. <style>        — all CSS. Theme colors are CSS variables in :root.
+     2. HTML screens   — login, home (artists), artist (shows), setup, app (dashboard)
+     3. <script module>— this block. Firebase init, then all app logic.
+
+   DATA MODEL (Firestore):
+     /artists/{artistId}                     → { id, name, tmName }
+     /artists/{artistId}/shows/{showId}      → { id, name }  (lightweight index)
+     /shows/{showId}                         → full show object (itinerary, ros,
+                                                contacts, tasks, notes, venues,
+                                                lodging, guests, schedules)
+
+   AUTH & ROLES:
+     Firebase email/password. Role is decided by email in ROLE_BY_EMAIL below.
+     'tm'     = full edit access.
+     'artist' = read-only (body gets .readonly class, which hides edit controls).
+
+   SCREENS are toggled by showScreen(id) — only one visible at a time.
+   CACHING: _artistsCache / _showsCache / _showStateCache reduce Firestore reads.
+     They are busted (set to null / deleted) on every write so reads stay fresh.
+
+   ALL onclick handlers must be added to the Object.assign(window, {...}) block
+   near the bottom, because module scope is not global.
+   ============================================================================ */
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAslM2gzcibWYSiE9LVnqSCC8dK_ViNfMA",
+  authDomain: "tm-dashboard-71c82.firebaseapp.com",
+  projectId: "tm-dashboard-71c82",
+  storageBucket: "tm-dashboard-71c82.firebasestorage.app",
+  messagingSenderId: "372483649255",
+  appId: "1:372483649255:web:247ae4253b490bb3e6bc42"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// Expose to global scope so non-module scripts can access
+window.db   = db;
+window.auth = auth;
+
+// ════════════════════════════════
+// STORAGE — Firestore layer
+// Structure:
+//   /artists/{artistId}        → { id, name, tmName }
+//   /artists/{artistId}/shows/{showId} → { id, name }
+//   /shows/{showId}            → full show state
+// ════════════════════════════════
+
+let currentArtistId = null;
+let currentShowId   = null;
+let state = null;
+let _artistsCache = null;
+let _showsCache   = {};
+let _showStateCache = {};
+
+function uid() { return Math.random().toString(36).slice(2,9); }
+
+// Escape user-supplied text before injecting into innerHTML, so values
+// containing < > & " ' can't break the markup or inject HTML.
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ════════════════════════════════
+// AUTH / ROLES
+// ════════════════════════════════
+// ════════════════════════════════
+// AUTH — Firebase Email/Password
+// ════════════════════════════════
+const ROLE_BY_EMAIL = {
+  'isaiah.tourmanager@gmail.com': 'tm',
+  'contact@sullyofficial.com':    'artist',
+  'joeylitwa17@gmail.com':        'artist',
+};
+
+let currentRole = null;
+
+function getRoleForEmail(email) {
+  return ROLE_BY_EMAIL[(email || '').toLowerCase()] || null;
+}
+
+async function doLogin() {
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { errEl.textContent = 'Enter your email and password.'; return; }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const role = getRoleForEmail(cred.user.email);
+    if (!role) {
+      await signOut(auth);
+      errEl.textContent = 'This account does not have access.';
+      return;
+    }
+    await handleAuthSuccess(cred.user, role);
+  } catch(e) {
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+      errEl.textContent = 'Incorrect email or password.';
+    } else {
+      errEl.textContent = 'Sign in failed. Try again.';
+    }
+  }
+}
+
+async function handleAuthSuccess(user, role) {
+  currentRole = role;
+  if (role === 'tm') {
+    document.body.classList.remove('readonly');
+    await goHome();
+    showScreen('home-screen');
+  } else {
+    // Artist / artist wife — go straight to artist screen if one artist, else home
+    document.body.classList.add('readonly');
+    const artists = await getArtists();
+    if (artists.length === 1) {
+      currentArtistId = artists[0].id;
+      await renderArtistScreen(currentArtistId);
+      showScreen('artist-screen');
+    } else {
+      await goHome();
+      showScreen('home-screen');
+    }
+  }
+}
+
+async function logout() {
+  try { await signOut(auth); } catch {}
+  currentRole = null;
+  currentArtistId = null;
+  currentShowId = null;
+  state = null;
+  document.body.classList.remove('readonly');
+  showScreen('login-screen');
+}
+
+// ── Artists ──
+async function getArtists() {
+  if (_artistsCache) return _artistsCache;
+  try {
+    const snap = await getDocs(collection(db, 'artists'));
+    _artistsCache = snap.docs.map(d => d.data());
+    return _artistsCache;
+  } catch (e) { console.error('getArtists failed (check Firestore rules/connection):', e); return []; }
+}
+async function addArtistDoc(a) {
+  _artistsCache = null; // bust cache
+  await setDoc(doc(db, 'artists', a.id), a);
+}
+async function deleteArtistDoc(id) {
+  _artistsCache = null;
+  // Firestore won't cascade-delete subcollections — manually clean up /artists/{id}/shows/
+  try {
+    const subSnap = await getDocs(collection(db, 'artists', id, 'shows'));
+    for (const d of subSnap.docs) await deleteDoc(d.ref);
+  } catch { /* best-effort */ }
+  await deleteDoc(doc(db, 'artists', id));
+}
+
+// ── Shows index ──
+async function getShows(artistId) {
+  if (_showsCache[artistId]) return _showsCache[artistId];
+  try {
+    const snap = await getDocs(collection(db, 'artists', artistId, 'shows'));
+    _showsCache[artistId] = snap.docs.map(d => d.data());
+    return _showsCache[artistId];
+  } catch (e) { console.error('getShows failed (check Firestore rules/connection):', e); return []; }
+}
+async function saveShows(artistId, list) {
+  // Don't cache after write — bust so next read fetches fresh from Firestore
+  _showsCache[artistId] = null;
+  for (const s of list) {
+    await setDoc(doc(db, 'artists', artistId, 'shows', s.id), s);
+  }
+}
+async function addShowDoc(artistId, showMeta) {
+  _showsCache[artistId] = null; // bust cache
+  await setDoc(doc(db, 'artists', artistId, 'shows', showMeta.id), showMeta);
+}
+async function deleteShowDoc(artistId, showId) {
+  _showsCache[artistId] = null;
+  await deleteDoc(doc(db, 'artists', artistId, 'shows', showId));
+  await deleteDoc(doc(db, 'shows', showId));
+  delete _showStateCache[showId];
+}
+
+// ── Show state ──
+async function getShowState(showId) {
+  if (_showStateCache[showId]) return _showStateCache[showId];
+  try {
+    const snap = await getDoc(doc(db, 'shows', showId));
+    if (!snap.exists()) return null;
+    const s = snap.data();
+    s.days     = (s.days || []).map(d => new Date(d));
+    s.showDate  = s.showDate ? new Date(s.showDate) : null;
+    s.contacts  = s.contacts  || [];
+    s.crew      = s.crew      || [];
+    s.tasks     = s.tasks     || [];
+    s.notes     = s.notes     || [];
+    s.ros       = s.ros       || [];
+    s.venues    = s.venues    || [];
+    s.lodging   = s.lodging   || [];
+    s.schedules = s.schedules || {};
+    s.guests    = s.guests    || [];
+    s.flights   = s.flights   || [];
+    _showStateCache[showId] = s;
+    return s;
+  } catch (e) { console.error('getShowState failed:', e); throw e; }
+}
+async function saveShowState(showId, s) {
+  const toSave = { ...s, days: s.days.map(d => d.toISOString()), showDate: s.showDate ? s.showDate.toISOString() : null };
+  _showStateCache[showId] = s;
+  try {
+    await setDoc(doc(db, 'shows', showId), toSave);
+  } catch (e) {
+    console.error('saveShowState FAILED:', e);
+    alert('Could not save changes to the database: ' + (e.message || e) + '\n\nYour change may be lost on refresh. This is usually a Firestore rules or connection issue.');
+    throw e;
+  }
+}
+async function saveState() {
+  if (currentShowId && state) await saveShowState(currentShowId, state);
+}
+
+// ════════════════════════════════
+// SCREEN MANAGEMENT
+// ════════════════════════════════
+function showScreen(id) {
+  ['login-screen','home-screen','artist-screen','setup-screen','app'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.style.display = s === id ? (s === 'setup-screen' || s === 'login-screen' ? 'flex' : 'block') : 'none';
+  });
+  window.scrollTo(0, 0);
+}
+
+async function goHome() {
+  currentArtistId = null; currentShowId = null; state = null;
+  hideNewArtistForm();
+  await renderHome();
+  showScreen('home-screen');
+}
+
+async function goToArtist() {
+  if (!currentArtistId) { await goHome(); return; }
+  currentShowId = null; state = null;
+  await renderArtistScreen(currentArtistId);
+  showScreen('artist-screen');
+}
+
+// ════════════════════════════════
+// HOME SCREEN
+// ════════════════════════════════
+async function renderHome() {
+  const artists = await getArtists();
+  const list = document.getElementById('artist-list');
+  if (!artists.length) {
+    list.innerHTML = '<div class="empty-state">No artists yet. Add one below.</div>';
+    return;
+  }
+  // Build cards — fetch show lists in parallel
+  const rows = await Promise.all(artists.map(async (a, i) => {
+    const shows = await getShows(a.id);
+    const showCount = shows.length;
+    const initials = (a.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    let nextShow = '';
+    if (shows.length) {
+      let soonest = null;
+      for (const sh of shows) {
+        // Prefer showDate stored on the lightweight index doc (no extra read).
+        // Fall back to the full show doc only for legacy shows missing it.
+        let sd = sh.showDate ? new Date(sh.showDate) : undefined;
+        if (sd === undefined) {
+          const saved = await getShowState(sh.id);
+          sd = saved && saved.showDate ? saved.showDate : null;
+        }
+        if (sd && (!soonest || sd < soonest)) soonest = sd;
+      }
+      if (soonest) nextShow = ' · Next: ' + fmtDateSimple(soonest);
+    }
+    return `<div class="artist-card" onclick="openArtist('${a.id}')">
+      <div class="artist-av av${i % 5}">${esc(initials)}</div>
+      <div class="artist-card-body">
+        <div class="artist-card-name">${esc(a.name)}</div>
+        <div class="artist-card-meta">TM: ${esc(a.tmName) || '—'}</div>
+        <div class="artist-card-shows">${showCount} show${showCount !== 1 ? 's' : ''}${nextShow}</div>
+      </div>
+      <button class="artist-card-del" onclick="event.stopPropagation();deleteArtist('${a.id}')" title="Delete artist">×</button>
+    </div>`;
+  }));
+  list.innerHTML = rows.join('');
+}
+
+// ── New Artist Form ──
+async function showEditArtistForm() {
+  const artists = await getArtists();
+  const artist  = artists.find(a => a.id === currentArtistId);
+  if (!artist) return;
+  document.getElementById('eaf-name').value = artist.name;
+  document.getElementById('eaf-tm').value   = artist.tmName || '';
+  document.getElementById('edit-artist-form').style.display = 'block';
+}
+function hideEditArtistForm() {
+  document.getElementById('edit-artist-form').style.display = 'none';
+}
+async function submitEditArtist() {
+  const name = document.getElementById('eaf-name').value.trim();
+  const tm   = document.getElementById('eaf-tm').value.trim();
+  if (!name) return;
+  const artists = await getArtists();
+  const artist  = artists.find(a => a.id === currentArtistId);
+  if (!artist) return;
+  artist.name   = name;
+  artist.tmName = tm || artist.tmName;
+  _artistsCache = null;
+  await setDoc(doc(db, 'artists', artist.id), artist);
+  hideEditArtistForm();
+  document.getElementById('artist-screen-name').textContent = name;
+  await renderArtistScreen(currentArtistId);
+}
+
+function showNewArtistForm() {
+  document.getElementById('new-artist-form').style.display = 'block';
+  document.getElementById('btn-new-artist').style.display = 'none';
+  document.getElementById('naf-name').value = '';
+  document.getElementById('naf-tm').value = '';
+  document.getElementById('naf-name').focus();
+}
+function hideNewArtistForm() {
+  document.getElementById('new-artist-form').style.display = 'none';
+  document.getElementById('btn-new-artist').style.display = '';
+}
+async function submitNewArtist() {
+  const name = document.getElementById('naf-name').value.trim();
+  const tm   = document.getElementById('naf-tm').value.trim();
+  if (!name) { document.getElementById('naf-name').focus(); return; }
+  const a = { id: uid(), name, tmName: tm || 'TM' };
+  await addArtistDoc(a);
+  hideNewArtistForm();
+  await openArtist(a.id);
+}
+
+async function deleteArtist(id) {
+  if (!confirm('Delete this artist and all their shows?')) return;
+  const shows = await getShows(id);
+  for (const s of shows) await deleteShowDoc(id, s.id);
+  await deleteArtistDoc(id);
+  _artistsCache = null;
+  await renderHome();
+}
+
+async function openArtist(id) {
+  currentArtistId = id;
+  await renderArtistScreen(id);
+  showScreen('artist-screen');
+}
+
+// ════════════════════════════════
+// ARTIST SCREEN (shows list)
+// ════════════════════════════════
+async function renderArtistScreen(artistId) {
+  const artists = await getArtists();
+  const artist = artists.find(a => a.id === artistId);
+  if (!artist) { await goHome(); return; }
+  document.getElementById('artist-screen-name').textContent = artist.name;
+  const shows = await getShows(artistId);
+  const list = document.getElementById('show-list');
+  if (!shows.length) {
+    list.innerHTML = '<div class="empty-state">No shows yet. Add one below.</div>';
+    return;
+  }
+  const rows = await Promise.all(shows.map(async s => {
+    const saved = await getShowState(s.id);
+    let meta = '';
+    if (saved) {
+      const tasksDone = (saved.tasks || []).filter(t => t.done).length;
+      const tasksTotal = (saved.tasks || []).length;
+      meta = `${saved.days.length} days · Show: ${saved.showDate ? fmtDateSimple(saved.showDate) : 'TBD'} · Tasks: ${tasksDone}/${tasksTotal}`;
+    }
+    return `<div class="show-card-wrap" id="scw-${s.id}">
+      <div class="show-card" onclick="openShow('${s.id}')">
+        <div class="show-card-left">
+          <div class="show-card-name">${esc(s.name)}</div>
+          <div class="show-card-meta">${meta}</div>
+        </div>
+        <button class="show-card-edit" onclick="event.stopPropagation();showEditShowForm('${s.id}')" title="Edit show">✏</button>
+        <button class="show-card-del" onclick="event.stopPropagation();deleteShow('${artistId}','${s.id}')" title="Delete show">×</button>
+      </div>
+      <div class="show-edit-form" id="sef-${s.id}">
+        <div class="sef-grid">
+          <input id="sef-name-${s.id}" type="text" placeholder="Show name" value="${esc(s.name)}" class="sef-span2">
+          <input id="sef-start-${s.id}" type="date" placeholder="Start date">
+          <input id="sef-days-${s.id}" type="number" min="1" max="30" placeholder="# days">
+          <input id="sef-show-${s.id}" type="date" placeholder="Show day">
+        </div>
+        <div class="sef-actions">
+          <button class="btn-primary" onclick="submitEditShow('${s.id}')">Save →</button>
+          <button class="btn-sm" onclick="hideEditShowForm('${s.id}')">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  }));
+  list.innerHTML = rows.join('');
+}
+
+
+// ── Edit Show (inline) ──
+async function showEditShowForm(showId) {
+  // Hide any other open edit forms first
+  document.querySelectorAll('.show-edit-form').forEach(el => {
+    if (el.id !== 'sef-' + showId) el.style.display = 'none';
+  });
+  const form = document.getElementById('sef-' + showId);
+  if (!form) return;
+  const saved = await getShowState(showId);
+  if (saved) {
+    // Pre-fill dates
+    if (saved.days && saved.days.length) {
+      const first = saved.days[0];
+      document.getElementById('sef-start-' + showId).value =
+        first.toISOString().slice(0,10);
+    }
+    document.getElementById('sef-days-' + showId).value = saved.days ? saved.days.length : 1;
+    if (saved.showDate) {
+      document.getElementById('sef-show-' + showId).value =
+        saved.showDate.toISOString().slice(0,10);
+    }
+  }
+  form.style.display = form.style.display === 'block' ? 'none' : 'block';
+}
+
+function hideEditShowForm(showId) {
+  const form = document.getElementById('sef-' + showId);
+  if (form) form.style.display = 'none';
+}
+
+async function submitEditShow(showId) {
+  const name    = document.getElementById('sef-name-' + showId)?.value.trim();
+  const startV  = document.getElementById('sef-start-' + showId)?.value;
+  const daysN   = parseInt(document.getElementById('sef-days-' + showId)?.value) || 1;
+  const showV   = document.getElementById('sef-show-' + showId)?.value;
+  if (!name) { alert('Show name is required.'); return; }
+
+  const saved = await getShowState(showId);
+  if (!saved) return;
+
+  // Update name
+  saved.name = name;
+
+  // Rebuild days if start or count changed
+  if (startV) {
+    const start = parseLocalDate(startV);
+    const newDays = Array.from({ length: daysN }, (_, i) => {
+      const d = new Date(start); d.setDate(d.getDate() + i); return d;
+    });
+    // Preserve existing schedule data — remap by date string, drop days no longer in range
+    const oldSched = saved.schedules || {};
+    const newSched = {};
+    newDays.forEach(d => {
+      const key = d.toDateString();
+      newSched[key] = oldSched[key] || [];
+    });
+    saved.days = newDays;
+    saved.schedules = newSched;
+  }
+
+  // Update show date
+  if (showV) {
+    saved.showDate = parseLocalDate(showV);
+  } else if (showV === '') {
+    saved.showDate = null;
+  }
+
+  // Persist to Firestore
+  await saveShowState(showId, saved);
+
+  // Update show name / showDate in the shows index if changed
+  const shows = await getShows(currentArtistId);
+  const showMeta = shows.find(s => s.id === showId);
+  if (showMeta) {
+    const newShowDateISO = saved.showDate ? saved.showDate.toISOString() : null;
+    if (showMeta.name !== name || showMeta.showDate !== newShowDateISO) {
+      showMeta.name = name;
+      showMeta.showDate = newShowDateISO;
+      await setDoc(doc(db, 'artists', currentArtistId, 'shows', showId), showMeta);
+      _showsCache[currentArtistId] = null;
+    }
+  }
+
+  hideEditShowForm(showId);
+  await renderArtistScreen(currentArtistId);
+}
+
+async function showNewShowForm() {
+  const artists = await getArtists();
+  const artist = artists.find(a => a.id === currentArtistId);
+  document.getElementById('s-artist').value = artist ? artist.name : '';
+  document.getElementById('s-tm').value = artist ? artist.tmName : '';
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-start').value = '';
+  document.getElementById('s-days').value = '3';
+  document.getElementById('s-show').value = '';
+  showScreen('setup-screen');
+}
+
+async function setupBack() {
+  if (currentArtistId) { await renderArtistScreen(currentArtistId); showScreen('artist-screen'); }
+  else await goHome();
+}
+
+async function deleteShow(artistId, showId) {
+  if (!confirm('Delete this show?')) return;
+  await deleteShowDoc(artistId, showId);
+  await renderArtistScreen(artistId);
+}
+
+async function deleteCurrentShow() {
+  if (!currentShowId || !currentArtistId) return;
+  if (!confirm('Delete this show and go back?')) return;
+  await deleteShowDoc(currentArtistId, currentShowId);
+  await goToArtist();
+}
+
+async function openShow(showId) {
+  let saved;
+  try {
+    saved = await getShowState(showId);
+  } catch (e) {
+    alert('Could not load show data. This is usually a Firestore security rules issue. Error: ' + (e.message || e));
+    return;
+  }
+  if (!saved) {
+    alert('This show has no saved data yet, or the read was blocked by Firestore security rules. Check Console → Firestore → Rules.');
+    return;
+  }
+  currentShowId = showId;
+  state = saved;
+  buildApp();
+  showScreen('app');
+}
+
+// ════════════════════════════════
+// HELPERS
+// ════════════════════════════════
+function fmtDateSimple(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+function fmtDate(d) { return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }); }
+function fmtShort(d) { return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+function sameDay(a,b) { return a.toDateString() === b.toDateString(); }
+function dayLabel(d) {
+  const isShow = state && state.showDate && sameDay(d, state.showDate);
+  return fmtShort(d) + (isShow ? ' — Show' : '');
+}
+function parseLocalDate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+// Build <option> tags for a day picker. selected = currently chosen day label.
+function dayOptionTags(selected) {
+  const days = (state && state.days) ? state.days : [];
+  let html = `<option value="">Day unset</option>`;
+  days.forEach(d => {
+    const lbl = dayLabel(d);
+    html += `<option value="${esc(lbl)}"${lbl===selected?' selected':''}>${esc(lbl)}</option>`;
+  });
+  return html;
+}
+
+// ════════════════════════════════
+// DEFAULT SHOW SCHEDULE + TASKS
+// ════════════════════════════════
+const defaultShowSchedule = [
+  { time: '9:00a', title: 'Hotel check-in / morning call', sub: 'Confirm all rooms — comp + rider rooms', badge: 'b-hotel' },
+  { time: '12:00p', title: 'Venue load-in', sub: 'Meet venue PM / production manager at loading dock', badge: 'b-prod' },
+  { time: '2:00p', title: 'Sound check', sub: 'Artist + opener. Confirm FOH, monitor, IEM specs', badge: 'b-prod' },
+  { time: '4:30p', title: 'Catering / dinner', sub: 'Rider must be fulfilled. Check hospitality.', badge: 'b-meal' },
+  { time: '6:00p', title: 'Doors open', sub: 'Security brief, guest list to box office, merch table set', badge: 'b-show' },
+  { time: '7:00p', title: 'Opener set', sub: 'Confirm set length with venue', badge: 'b-show' },
+  { time: '8:30p', title: 'Headliner set', sub: 'Confirm set length with artist. Brief crew on changeover.', badge: 'b-show' },
+  { time: '10:30p', title: 'Load-out', sub: 'Gear manifest check. Settlement with promoter.', badge: 'b-prod' },
+];
+
+const defaultTasks = [
+  { text: 'Confirm hotel block — check all rooms', day: 'show' },
+  { text: 'Venue advance call — confirm load-in time', day: 'show' },
+  { text: 'Rider fulfilled — hospitality & catering', day: 'show' },
+  { text: 'Guest list finalized with box office', day: 'show' },
+  { text: 'Confirm set times with opener + artist', day: 'show' },
+  { text: 'Merch table setup + inventory count', day: 'show' },
+  { text: 'Settlement with promoter after show', day: 'show' },
+  { text: 'Gear manifest — load-out checklist', day: 'show' },
+  { text: 'Ground transport confirmed for full run', day: 'all' },
+];
+
+// ════════════════════════════════
+// LAUNCH (new show)
+// ════════════════════════════════
+async function launch() {
+  const name   = document.getElementById('s-name').value.trim();
+  const artist = document.getElementById('s-artist').value.trim();
+  const startV = document.getElementById('s-start').value;
+  const daysN  = parseInt(document.getElementById('s-days').value) || 1;
+  const showV  = document.getElementById('s-show').value;
+  const tmName  = document.getElementById('s-tm').value.trim();
+  if (!name || !startV) { alert('Please enter a show name and start date.'); return; }
+
+  const start = parseLocalDate(startV);
+  const showDate = showV ? parseLocalDate(showV) : null;
+  const days = Array.from({ length: daysN }, (_, i) => {
+    const d = new Date(start); d.setDate(d.getDate() + i); return d;
+  });
+
+  const schedules = {};
+  days.forEach(d => {
+    const key = d.toDateString();
+    schedules[key] = (showDate && sameDay(d, showDate))
+      ? defaultShowSchedule.map(s => ({ ...s, id: uid() }))
+      : [];
+  });
+
+  const tasks = defaultTasks.map(t => ({
+    id: uid(), text: t.text, done: false,
+    day: t.day === 'show' && showDate ? (fmtShort(showDate) + ' — Show') : t.day === 'all' ? 'All days' : 'Show day'
+  }));
+
+  const contacts = [
+    { id: uid(), name: tmName || 'TM', role: 'Tour manager', phone: '', color: 0 },
+    { id: uid(), name: artist || 'Artist', role: 'Artist', phone: '', color: 1 },
+  ];
+
+  const newState = { name, artist, tmName: tmName || 'TM', days, showDate, contacts, crew: [], tasks, notes: [], schedules, ros: [], venues: [], lodging: [], guests: [], flights: [] };
+
+  const showId = uid();
+  currentShowId = showId;
+  state = newState;
+
+  await addShowDoc(currentArtistId, { id: showId, name, showDate: showDate ? showDate.toISOString() : null });
+  await saveState();
+
+  buildApp();
+  showScreen('app');
+}
+
+
+
+// ════════════════════════════════
+// APP BUILD
+// ════════════════════════════════
+function buildApp() {
+  document.getElementById('tb-title').textContent = state.name;
+
+  document.getElementById('s-days-display').textContent = state.days.length;
+  document.getElementById('s-show-display').textContent = state.showDate ? fmtDateSimple(state.showDate) : '—';
+  buildDayTabs();
+  buildContacts();
+  buildTaskFilterChips();
+  buildTasks();
+  buildDaySels();
+  renderNotes();
+  renderRos();
+  buildGuestList();
+  buildFlights();
+  renderLocations();
+  updateStats();
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===0));
+}
+
+// ════════════════════════════════
+// ITINERARY
+// ════════════════════════════════
+function buildDayTabs() {
+  const tabs = document.getElementById('day-tabs');
+  const panels = document.getElementById('day-panels');
+  tabs.innerHTML = ''; panels.innerHTML = '';
+  state.days.forEach((d, i) => {
+    const isShow = state.showDate && sameDay(d, state.showDate);
+    const label = fmtShort(d) + (isShow ? ' — Show' : '');
+    const btn = document.createElement('button');
+    btn.className = 'dtab' + (i===0 ? ' active' : '');
+    btn.textContent = label;
+    btn.onclick = () => switchDay(i);
+    tabs.appendChild(btn);
+    const panel = document.createElement('div');
+    panel.id = 'dp-' + i;
+    panel.style.display = i===0 ? 'block' : 'none';
+    panel.innerHTML = buildDayPanel(d, i, isShow);
+    panels.appendChild(panel);
+  });
+}
+
+function buildDayPanel(d, idx, isShow) {
+  const key = d.toDateString();
+  const items = sortSchedule(state.schedules[key] || []);
+  // Also persist sorted order back to state
+  state.schedules[key] = items;
+  const label = fmtDate(d) + (isShow ? ' — Show day' : '');
+  let rows = items.length === 0
+    ? '<div class="empty-state">No items yet. Add one below.</div>'
+    : items.map(s => schedRowHTML(s, key)).join('');
+
+  const badgeOpts = ['b-show','b-travel','b-hotel','b-prod','b-meal','b-media','b-off'].map(b =>
+    `<option value="${b}">${b.replace('b-','')}</option>`).join('');
+
+  return `
+    <div class="card">
+      <div class="card-header">${label}</div>
+      <div id="sched-${key.replace(/ /g,'-')}">${rows}</div>
+    </div>
+    <div class="add-row">
+      <input id="st-${idx}" type="text" placeholder="Time (e.g. 3:00p)" style="max-width:110px">
+      <input id="se-${idx}" type="text" placeholder="Item / event">
+      <input id="ss-${idx}" type="text" placeholder="Note (optional)" style="max-width:180px">
+      <select id="sb-${idx}" style="max-width:100px">${badgeOpts}</select>
+      <button class="btn-add" onclick="addSchedItem('${key}',${idx})">Add</button>
+    </div>`;
+}
+
+// Parse a time string like "9:00a", "10:30p", "14:00" into minutes for sorting
+function timeToMins(str) {
+  if (!str || str === '—') return 9999;
+  str = str.trim().toLowerCase();
+  const m = str.match(/^(\d{1,2}):(\d{2})\s*(am?|pm?)?$/);
+  if (!m) return 9999;
+  let h = parseInt(m[1]), min = parseInt(m[2]);
+  const p = m[3] || '';
+  if (p.startsWith('p') && h !== 12) h += 12;
+  if (p.startsWith('a') && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function sortSchedule(items) {
+  return [...items].sort((a, b) => timeToMins(a.time) - timeToMins(b.time));
+}
+
+function addSchedItem(key, idx) {
+  const t = document.getElementById('st-'+idx).value.trim();
+  const e = document.getElementById('se-'+idx).value.trim();
+  const s = document.getElementById('ss-'+idx).value.trim();
+  const b = document.getElementById('sb-'+idx).value;
+  if (!e) return;
+  const item = { id: uid(), time: t||'—', title: e, sub: s, badge: b };
+  if (!state.schedules[key]) state.schedules[key] = [];
+  state.schedules[key].push(item);
+  // Sort by time and re-render the whole day container
+  state.schedules[key] = sortSchedule(state.schedules[key]);
+  const container = document.getElementById('sched-'+key.replace(/ /g,'-'));
+  container.innerHTML = state.schedules[key].map(s => schedRowHTML(s, key)).join('');
+  document.getElementById('st-'+idx).value='';
+  document.getElementById('se-'+idx).value='';
+  document.getElementById('ss-'+idx).value='';
+  saveState(); // fire-and-forget
+}
+
+// Render a single schedule row (view mode)
+function schedRowHTML(s, key) {
+  const badgeOpts = ['b-show','b-travel','b-hotel','b-prod','b-meal','b-media','b-off']
+    .map(b => `<option value="${b}" ${b===s.badge?'selected':''}>${b.replace('b-','')}</option>`).join('');
+  return `<div class="sched-row" id="sr-${s.id}">
+    <span class="sched-time">${esc(s.time)||'—'}</span>
+    <div class="sched-body">
+      <div class="sched-title">${esc(s.title)} <span class="badge ${s.badge}">${s.badge.replace('b-','')}</span></div>
+      ${s.sub ? `<div class="sched-sub">${esc(s.sub)}</div>` : ''}
+    </div>
+    <button class="sched-edit-btn" onclick="editSchedItem('${key}','${s.id}')" title="Edit">✏</button>
+    <button class="sched-del" onclick="deleteSchedItem('${key}','${s.id}')">×</button>
+  </div>`;
+}
+
+// Flip a row into inline edit mode
+function editSchedItem(key, id) {
+  const row = document.getElementById('sr-' + id);
+  if (!row) return;
+  const item = (state.schedules[key] || []).find(s => s.id === id);
+  if (!item) return;
+  const badgeOpts = ['b-show','b-travel','b-hotel','b-prod','b-meal','b-media','b-off']
+    .map(b => `<option value="${b}" ${b===item.badge?'selected':''}>${b.replace('b-','')}</option>`).join('');
+  row.className = 'sched-row sched-row-editing';
+  row.innerHTML = `
+    <div class="sched-inline-form">
+      <input class="f-time"  id="ei-t-${id}" type="text" value="${esc(item.time)}" placeholder="Time">
+      <input class="f-title" id="ei-e-${id}" type="text" value="${esc(item.title)}" placeholder="Event">
+      <input class="f-note"  id="ei-n-${id}" type="text" value="${esc(item.sub)}" placeholder="Note">
+      <select class="f-badge" id="ei-b-${id}">${badgeOpts}</select>
+      <button class="sched-save-btn"   onclick="saveSchedEdit('${key}','${id}')">Save</button>
+      <button class="sched-cancel-btn" onclick="cancelSchedEdit('${key}','${id}')">Cancel</button>
+    </div>`;
+  document.getElementById('ei-e-' + id)?.focus();
+}
+
+// Save an inline-edited row
+function saveSchedEdit(key, id) {
+  const t = document.getElementById('ei-t-' + id)?.value.trim();
+  const e = document.getElementById('ei-e-' + id)?.value.trim();
+  const n = document.getElementById('ei-n-' + id)?.value.trim();
+  const b = document.getElementById('ei-b-' + id)?.value;
+  if (!e) return;
+  const items = state.schedules[key] || [];
+  const item = items.find(s => s.id === id);
+  if (!item) return;
+  item.time  = t || '—';
+  item.title = e;
+  item.sub   = n;
+  item.badge = b;
+  // Re-sort and re-render the whole container so order updates correctly
+  state.schedules[key] = sortSchedule(items);
+  const container = document.getElementById('sched-' + key.replace(/ /g, '-'));
+  if (container) container.innerHTML = state.schedules[key].map(s => schedRowHTML(s, key)).join('');
+  saveState();
+}
+
+// Cancel inline edit — restore original view
+function cancelSchedEdit(key, id) {
+  const item = (state.schedules[key] || []).find(s => s.id === id);
+  if (!item) return;
+  const row = document.getElementById('sr-' + id);
+  if (row) { row.outerHTML = schedRowHTML(item, key); }
+}
+
+function deleteSchedItem(key, id) {
+  state.schedules[key] = (state.schedules[key]||[]).filter(s=>s.id!==id);
+  const el = document.getElementById('sr-'+id); if (el) el.remove();
+  saveState(); // fire-and-forget
+}
+
+function switchDay(idx) {
+  document.querySelectorAll('.dtab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  state.days.forEach((_,i)=>{ const p=document.getElementById('dp-'+i); if(p) p.style.display=i===idx?'block':'none'; });
+}
+
+// ════════════════════════════════
+// RUN OF SHOW
+// ════════════════════════════════
+function parseMins(str) {
+  if (!str) return null;
+  str = str.trim().toLowerCase();
+  const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm|a|p)?$/);
+  if (!m) return null;
+  let h = parseInt(m[1]), min = parseInt(m[2]);
+  const p = m[3]||'';
+  if (p.startsWith('p') && h!==12) h+=12;
+  if (p.startsWith('a') && h===12) h=0;
+  return h*60+min;
+}
+function minsDiff(a,b) { if(a===null||b===null) return null; let d=b-a; if(d<0) d+=1440; return d; }
+function fmtDuration(m) { if(m===null||m<0) return ''; if(!m) return '0 min'; const h=Math.floor(m/60),r=m%60; return h?r?`${h}h ${r}m`:`${h}h`:`${r} min`; }
+
+function rosItemHTML(r) {
+  const dur = fmtDuration(minsDiff(parseMins(r.timeStart), parseMins(r.timeEnd)));
+  const timeStr = r.timeStart && r.timeEnd ? `${esc(r.timeStart)} – ${esc(r.timeEnd)}` : esc(r.timeStart)||esc(r.timeEnd)||'—';
+  return `<div class="ros-item" id="ri-${r.id}">
+    <div class="ros-time-range">${timeStr}${dur?`<span class="ros-duration">${dur}</span>`:''}
+    </div>
+    <div class="ros-body">
+      <div class="ros-title">${esc(r.title)} <span class="badge ${r.type}">${r.type.replace('rt-','')}</span></div>
+      ${r.note?`<div class="ros-sub">${esc(r.note)}</div>`:''}
+    </div>
+    <button class="sched-edit-btn" onclick="editRosItem('${r.id}')" title="Edit">✏</button>
+    <button class="ros-del" onclick="deleteRosItem('${r.id}')">×</button>
+  </div>`;
+}
+
+function editRosItem(id) {
+  const r = (state.ros||[]).find(r => r.id === id);
+  if (!r) return;
+  const typeOpts = ['rt-headliner','rt-opener','rt-changeover','rt-doors','rt-curfew','rt-other']
+    .map(t => `<option value="${t}" ${t===r.type?'selected':''}>${t.replace('rt-','')}</option>`).join('');
+  const row = document.getElementById('ri-' + id);
+  if (!row) return;
+  row.className = 'ros-item sched-row-editing';
+  row.innerHTML = `<div class="sched-inline-form" style="width:100%">
+    <input class="f-time"  id="re-ts-${id}" type="text" value="${esc(r.timeStart)}" placeholder="Start">
+    <span style="color:var(--muted)">–</span>
+    <input class="f-time"  id="re-te-${id}" type="text" value="${esc(r.timeEnd)}" placeholder="End">
+    <input class="f-title" id="re-ti-${id}" type="text" value="${esc(r.title)}" placeholder="Act / event">
+    <input class="f-note"  id="re-no-${id}" type="text" value="${esc(r.note)}" placeholder="Note">
+    <select class="f-badge" id="re-ty-${id}">${typeOpts}</select>
+    <button class="sched-save-btn"   onclick="saveRosEdit('${id}')">Save</button>
+    <button class="sched-cancel-btn" onclick="cancelRosEdit('${id}')">Cancel</button>
+  </div>`;
+  document.getElementById('re-ti-' + id)?.focus();
+}
+
+function saveRosEdit(id) {
+  const r = (state.ros||[]).find(r => r.id === id);
+  if (!r) return;
+  r.timeStart = document.getElementById('re-ts-' + id)?.value.trim();
+  r.timeEnd   = document.getElementById('re-te-' + id)?.value.trim();
+  r.title     = document.getElementById('re-ti-' + id)?.value.trim() || r.title;
+  r.note      = document.getElementById('re-no-' + id)?.value.trim();
+  r.type      = document.getElementById('re-ty-' + id)?.value;
+  renderRos(); saveState();
+}
+
+function cancelRosEdit(id) {
+  const r = (state.ros||[]).find(r => r.id === id);
+  if (!r) return;
+  const row = document.getElementById('ri-' + id);
+  if (row) row.outerHTML = rosItemHTML(r);
+}
+
+function renderRos() {
+  const list = document.getElementById('ros-list');
+  if (!list) return;
+  list.innerHTML = state.ros && state.ros.length ? state.ros.map(rosItemHTML).join('') : '<div class="empty-state">No items yet.</div>';
+}
+
+function addRosItem() {
+  const timeStart = document.getElementById('ros-time-start').value.trim();
+  const timeEnd   = document.getElementById('ros-time-end').value.trim();
+  const title     = document.getElementById('ros-title').value.trim();
+  const note      = document.getElementById('ros-note').value.trim();
+  const type      = document.getElementById('ros-type').value;
+  if (!title) return;
+  if (!state.ros) state.ros = [];
+  state.ros.push({ id: uid(), timeStart, timeEnd, title, note, type });
+  renderRos();
+  document.getElementById('ros-time-start').value='';
+  document.getElementById('ros-time-end').value='';
+  document.getElementById('ros-title').value='';
+  document.getElementById('ros-note').value='';
+  saveState(); // fire-and-forget
+}
+
+function deleteRosItem(id) {
+  state.ros = (state.ros||[]).filter(r=>r.id!==id);
+  renderRos(); saveState();
+}
+
+// ════════════════════════════════
+// LOCATIONS
+// ════════════════════════════════
+function toggleLocForm(id) {
+  const el = document.getElementById(id);
+  const opening = el.style.display === 'none';
+  el.style.display = opening ? 'block' : 'none';
+  // Populate the venue day dropdown fresh each time the form opens
+  if (opening && id === 'venue-form') {
+    const sel = document.getElementById('vn-day');
+    if (sel) sel.innerHTML = dayOptionTags('');
+  }
+}
+
+function locField(label, val) {
+  if (!val) return '';
+  return `<div class="loc-field"><div class="loc-field-label">${esc(label)}</div><div class="loc-field-val">${esc(val)}</div></div>`;
+}
+function locFieldFull(label, val) {
+  if (!val) return '';
+  return `<div class="loc-field full"><div class="loc-field-label">${esc(label)}</div><div class="loc-field-val">${esc(val)}</div></div>`;
+}
+
+function renderLocations() {
+  if (!state.venues)  state.venues  = [];
+  if (!state.lodging) state.lodging = [];
+
+  const vList = document.getElementById('venue-list');
+  if (!state.venues.length) {
+    vList.innerHTML = '<div class="empty-state">No venue added yet.</div>';
+  } else {
+    // Order: by show-day sequence, then unscheduled last
+    const dayOrder = (state.days||[]).map(d => dayLabel(d));
+    const rank = v => { const i = dayOrder.indexOf(v.day); return v.day && i>=0 ? i : 999; };
+    const sorted = [...state.venues].sort((a,b) => rank(a)-rank(b));
+    const venueCard = v => `
+    <div class="loc-card" id="vc-${v.id}">
+      <div class="loc-card-header">
+        <div class="loc-card-name">${esc(v.name)}</div>
+        <button class="sched-edit-btn" onclick="editVenue('${v.id}')" title="Edit">✏</button>
+        <button class="loc-card-del" onclick="deleteVenue('${v.id}')">×</button>
+      </div>
+      <div class="loc-fields">
+        ${locFieldFull('Address', v.address)}
+        ${locField('Venue contact', v.contact)}
+        ${locField('Phone / email', v.phone)}
+        ${locField('Load-in time', v.loadin)}
+        ${locField('Capacity', v.capacity)}
+        ${locField('Parking', v.parking)}
+        ${locField('Green room', v.greenrm)}
+        ${locFieldFull('Stage specs', v.stage)}
+      </div>
+      ${v.notes ? `<div class="loc-notes">${esc(v.notes)}</div>` : ''}
+    </div>`;
+    // Group consecutively by day label
+    let html = '', lastDay = '\u0000';
+    const multipleDays = (state.days||[]).length > 1;
+    sorted.forEach(v => {
+      const dayKey = v.day || '';
+      if (multipleDays && dayKey !== lastDay) {
+        const header = dayKey || 'Unscheduled';
+        html += `<div class="venue-day-header">${esc(header)}</div>`;
+        lastDay = dayKey;
+      }
+      html += venueCard(v);
+    });
+    vList.innerHTML = html;
+  }
+
+  const lList = document.getElementById('lodging-list');
+  lList.innerHTML = state.lodging.length ? state.lodging.map(l => `
+    <div class="loc-card" id="lc-${l.id}">
+      <div class="loc-card-header">
+        <div class="loc-card-name">${esc(l.name)}</div>
+        <button class="sched-edit-btn" onclick="editLodging('${l.id}')" title="Edit">✏</button>
+        <button class="loc-card-del" onclick="deleteLodging('${l.id}')">×</button>
+      </div>
+      <div class="loc-fields">
+        ${locFieldFull('Address', l.address)}
+        ${locField('Check-in', l.checkin)}
+        ${locField('Check-out', l.checkout)}
+        ${locFieldFull('Confirmation #', l.conf)}
+      </div>
+      ${l.notes ? `<div class="loc-notes">${esc(l.notes)}</div>` : ''}
+    </div>`).join('') : '<div class="empty-state">No lodging added yet.</div>';
+}
+
+function addVenue() {
+  const v = {
+    id: uid(),
+    name:     document.getElementById('vn-name').value.trim(),
+    day:      document.getElementById('vn-day').value,
+    address:  document.getElementById('vn-address').value.trim(),
+    contact:  document.getElementById('vn-contact').value.trim(),
+    phone:    document.getElementById('vn-phone').value.trim(),
+    loadin:   document.getElementById('vn-loadin').value.trim(),
+    capacity: document.getElementById('vn-capacity').value.trim(),
+    parking:  document.getElementById('vn-parking').value.trim(),
+    greenrm:  document.getElementById('vn-greenrm').value.trim(),
+    stage:    document.getElementById('vn-stage').value.trim(),
+    notes:    document.getElementById('vn-notes').value.trim(),
+  };
+  if (!v.name) return;
+  if (!state.venues) state.venues = [];
+  state.venues.push(v);
+  renderLocations();
+  ['vn-name','vn-address','vn-contact','vn-phone','vn-loadin','vn-capacity','vn-parking','vn-greenrm','vn-stage','vn-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('vn-day').value = '';
+  document.getElementById('venue-form').style.display = 'none';
+  saveState();
+}
+
+function deleteVenue(id) {
+  if (!confirm('Delete this venue?')) return;
+  state.venues = state.venues.filter(v => v.id !== id);
+  renderLocations();
+  saveState();
+}
+function editVenue(id) {
+  const v = (state.venues||[]).find(v => v.id === id);
+  if (!v) return;
+  const card = document.getElementById('vc-' + id);
+  if (!card) return;
+  card.innerHTML = `
+    <div class="loc-form-grid">
+      <input id="ve-name-${id}" placeholder="Venue name" value="${esc(v.name)}" class="loc-span2">
+      <select id="ve-day-${id}" class="loc-span2">${dayOptionTags(v.day||'')}</select>
+      <input id="ve-addr-${id}" placeholder="Address" value="${esc(v.address)}" class="loc-span2">
+      <input id="ve-cont-${id}" placeholder="Venue contact" value="${esc(v.contact)}">
+      <input id="ve-phon-${id}" placeholder="Phone / email" value="${esc(v.phone)}">
+      <input id="ve-ldin-${id}" placeholder="Load-in time" value="${esc(v.loadin)}">
+      <input id="ve-cap-${id}"  placeholder="Capacity" value="${esc(v.capacity)}">
+      <input id="ve-park-${id}" placeholder="Parking" value="${esc(v.parking)}">
+      <input id="ve-grm-${id}"  placeholder="Green room" value="${esc(v.greenrm)}">
+      <input id="ve-stg-${id}"  placeholder="Stage specs" value="${esc(v.stage)}" class="loc-span2">
+      <textarea id="ve-nts-${id}" placeholder="Notes…" class="loc-span2" rows="2">${esc(v.notes)}</textarea>
+    </div>
+    <div class="add-row" style="margin-top:8px">
+      <button class="sched-save-btn"   onclick="saveVenueEdit('${id}')">Save</button>
+      <button class="sched-cancel-btn" onclick="renderLocations()">Cancel</button>
+    </div>`;
+  document.getElementById('ve-name-' + id)?.focus();
+}
+function saveVenueEdit(id) {
+  const v = (state.venues||[]).find(v => v.id === id);
+  if (!v) return;
+  v.name     = document.getElementById('ve-name-' + id)?.value.trim() || v.name;
+  v.day      = document.getElementById('ve-day-' + id)?.value ?? v.day;
+  v.address  = document.getElementById('ve-addr-' + id)?.value.trim();
+  v.contact  = document.getElementById('ve-cont-' + id)?.value.trim();
+  v.phone    = document.getElementById('ve-phon-' + id)?.value.trim();
+  v.loadin   = document.getElementById('ve-ldin-' + id)?.value.trim();
+  v.capacity = document.getElementById('ve-cap-' + id)?.value.trim();
+  v.parking  = document.getElementById('ve-park-' + id)?.value.trim();
+  v.greenrm  = document.getElementById('ve-grm-' + id)?.value.trim();
+  v.stage    = document.getElementById('ve-stg-' + id)?.value.trim();
+  v.notes    = document.getElementById('ve-nts-' + id)?.value.trim();
+  renderLocations(); saveState();
+}
+
+function addLodging() {
+  const l = {
+    id: uid(),
+    name:     document.getElementById('lg-name').value.trim(),
+    address:  document.getElementById('lg-address').value.trim(),
+    checkin:  document.getElementById('lg-checkin').value.trim(),
+    checkout: document.getElementById('lg-checkout').value.trim(),
+    conf:     document.getElementById('lg-conf').value.trim(),
+    notes:    document.getElementById('lg-notes').value.trim(),
+  };
+  if (!l.name) return;
+  if (!state.lodging) state.lodging = [];
+  state.lodging.push(l);
+  renderLocations();
+  ['lg-name','lg-address','lg-checkin','lg-checkout','lg-conf','lg-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('lodging-form').style.display = 'none';
+  saveState();
+}
+
+function deleteLodging(id) {
+  if (!confirm('Delete this lodging?')) return;
+  state.lodging = state.lodging.filter(l => l.id !== id);
+  renderLocations();
+  saveState();
+}
+function editLodging(id) {
+  const l = (state.lodging||[]).find(l => l.id === id);
+  if (!l) return;
+  const card = document.getElementById('lc-' + id);
+  if (!card) return;
+  card.innerHTML = `
+    <div class="loc-form-grid">
+      <input id="le-name-${id}" placeholder="Hotel / Airbnb name" value="${esc(l.name)}" class="loc-span2">
+      <input id="le-addr-${id}" placeholder="Address" value="${esc(l.address)}" class="loc-span2">
+      <input id="le-cin-${id}"  placeholder="Check-in" value="${esc(l.checkin)}">
+      <input id="le-cout-${id}" placeholder="Check-out" value="${esc(l.checkout)}">
+      <input id="le-conf-${id}" placeholder="Confirmation #" value="${esc(l.conf)}" class="loc-span2">
+      <textarea id="le-nts-${id}" placeholder="Notes…" class="loc-span2" rows="2">${esc(l.notes)}</textarea>
+    </div>
+    <div class="add-row" style="margin-top:8px">
+      <button class="sched-save-btn"   onclick="saveLodgingEdit('${id}')">Save</button>
+      <button class="sched-cancel-btn" onclick="renderLocations()">Cancel</button>
+    </div>`;
+  document.getElementById('le-name-' + id)?.focus();
+}
+function saveLodgingEdit(id) {
+  const l = (state.lodging||[]).find(l => l.id === id);
+  if (!l) return;
+  l.name     = document.getElementById('le-name-' + id)?.value.trim() || l.name;
+  l.address  = document.getElementById('le-addr-' + id)?.value.trim();
+  l.checkin  = document.getElementById('le-cin-'  + id)?.value.trim();
+  l.checkout = document.getElementById('le-cout-' + id)?.value.trim();
+  l.conf     = document.getElementById('le-conf-' + id)?.value.trim();
+  l.notes    = document.getElementById('le-nts-'  + id)?.value.trim();
+  renderLocations(); saveState();
+}
+
+// ════════════════════════════════
+// CONTACTS
+// ════════════════════════════════
+function buildContacts() {
+  const grid = document.getElementById('contact-grid');
+  grid.innerHTML = '';
+  state.contacts.forEach(c => grid.appendChild(contactCard(c)));
+  buildCrew();
+}
+function contactCard(c) {
+  const initials = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const div = document.createElement('div');
+  div.className='contact-card'; div.id='cc-'+c.id;
+  div.innerHTML=`<div class="contact-top">
+    <div class="avatar av${c.color%5}">${esc(initials)}</div>
+    <div style="flex:1;min-width:0"><div class="contact-name">${esc(c.name)}</div><div class="contact-role">${esc(c.role)}</div></div>
+    <button class="sched-edit-btn" onclick="editContact('${c.id}')" title="Edit">✏</button>
+    <button class="contact-del" onclick="deleteContact('${c.id}')">×</button>
+  </div><div class="contact-detail" id="cd-${c.id}">${esc(c.phone)||'—'}</div>`;
+  return div;
+}
+function addContact() {
+  const n=document.getElementById('c-name').value.trim();
+  const r=document.getElementById('c-role').value.trim();
+  const p=document.getElementById('c-phone').value.trim();
+  if (!n) return;
+  const c={id:uid(),name:n,role:r,phone:p,color:state.contacts.length};
+  state.contacts.push(c);
+  document.getElementById('contact-grid').appendChild(contactCard(c));
+  document.getElementById('c-name').value='';
+  document.getElementById('c-role').value='';
+  document.getElementById('c-phone').value='';
+  updateStats(); saveState();
+}
+function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  state.contacts=state.contacts.filter(c=>c.id!==id);
+  const el=document.getElementById('cc-'+id); if(el) el.remove();
+  updateStats(); saveState();
+}
+function editContact(id) {
+  const c = state.contacts.find(c => c.id === id);
+  if (!c) return;
+  const card = document.getElementById('cc-' + id);
+  if (!card) return;
+  card.innerHTML = `<div class="sched-inline-form" style="flex-direction:column;gap:6px">
+    <input id="ce-n-${id}" type="text" value="${esc(c.name)}" placeholder="Name" style="width:100%">
+    <input id="ce-r-${id}" type="text" value="${esc(c.role)}" placeholder="Role" style="width:100%">
+    <input id="ce-p-${id}" type="text" value="${esc(c.phone)}" placeholder="Phone / email" style="width:100%">
+    <div style="display:flex;gap:6px">
+      <button class="sched-save-btn"   onclick="saveContactEdit('${id}')">Save</button>
+      <button class="sched-cancel-btn" onclick="cancelContactEdit('${id}')">Cancel</button>
+    </div>
+  </div>`;
+  document.getElementById('ce-n-' + id)?.focus();
+}
+function saveContactEdit(id) {
+  const c = state.contacts.find(c => c.id === id);
+  if (!c) return;
+  c.name  = document.getElementById('ce-n-' + id)?.value.trim() || c.name;
+  c.role  = document.getElementById('ce-r-' + id)?.value.trim();
+  c.phone = document.getElementById('ce-p-' + id)?.value.trim();
+  buildContacts(); updateStats(); saveState();
+}
+function cancelContactEdit(id) {
+  buildContacts();
+}
+// ── Crew: simple checklist (name + role, checkable, no contact details) ──
+function buildCrew() {
+  const list = document.getElementById('crew-list');
+  if (!list) return;
+  const crew = state.crew || [];
+  if (!crew.length) { list.innerHTML='<div class="empty-state">No crew added yet.</div>'; return; }
+  list.innerHTML = '';
+  crew.forEach(c => list.appendChild(crewItem(c)));
+}
+function crewItem(c) {
+  const div=document.createElement('div'); div.className='task-item'; div.id='cw-'+c.id;
+  const label = c.role ? `${esc(c.name)} — <span style="color:var(--muted)">${esc(c.role)}</span>` : esc(c.name);
+  div.innerHTML=`<div class="task-check ${c.done?'done':''}" onclick="toggleCrew('${c.id}')">${c.done?'✓':''}</div>
+    <div class="task-text ${c.done?'done':''}" onclick="toggleCrew('${c.id}')">${label}</div>
+    <button class="task-del" onclick="deleteCrew('${c.id}')">×</button>`;
+  return div;
+}
+function addCrew() {
+  const n=document.getElementById('cr-name').value.trim();
+  const r=document.getElementById('cr-role').value.trim();
+  if (!n) return;
+  state.crew = state.crew || [];
+  state.crew.push({id:uid(),name:n,role:r,done:false});
+  buildCrew();
+  document.getElementById('cr-name').value='';
+  document.getElementById('cr-role').value='';
+  saveState();
+}
+function toggleCrew(id) {
+  const c=(state.crew||[]).find(c=>c.id===id);
+  if(!c) return;
+  c.done=!c.done;
+  const el=document.getElementById('cw-'+id);
+  if(el){
+    el.querySelector('.task-check').className='task-check'+(c.done?' done':'');
+    el.querySelector('.task-check').textContent=c.done?'✓':'';
+    el.querySelector('.task-text').className='task-text'+(c.done?' done':'');
+  }
+  saveState();
+}
+function deleteCrew(id) {
+  state.crew=(state.crew||[]).filter(c=>c.id!==id);
+  const el=document.getElementById('cw-'+id); if(el) el.remove();
+  if(!(state.crew||[]).length) buildCrew();
+  saveState();
+}
+
+// ════════════════════════════════
+// TASKS
+// ════════════════════════════════
+let taskFilter = 'All'; // 'All' or a specific day label
+
+function buildTaskFilterChips() {
+  const wrap = document.getElementById('task-filter-chips');
+  if (!wrap) return;
+  // Build chip labels: All + each day (with Show marker) + All days + Pre-show
+  const dayLabels = state.days.map(d => dayLabel(d));
+  const labels = ['All', ...dayLabels, 'All days', 'Pre-show'];
+  wrap.innerHTML = labels.map(lbl =>
+    `<button class="dtab${lbl===taskFilter?' active':''}" onclick="setTaskFilter('${lbl.replace(/'/g,"\\'")}')">${lbl}</button>`
+  ).join('');
+}
+
+function setTaskFilter(lbl) {
+  taskFilter = lbl;
+  buildTaskFilterChips();
+  buildTasks();
+}
+
+function buildTasks() {
+  const list=document.getElementById('task-list');
+  list.innerHTML='';
+  // Filter tasks by the active chip
+  const visible = taskFilter === 'All'
+    ? state.tasks
+    : state.tasks.filter(t => t.day === taskFilter);
+  if (!visible.length) {
+    list.innerHTML = '<div class="empty-state">' +
+      (taskFilter === 'All' ? 'No tasks yet.' : 'No tasks for ' + taskFilter + '.') + '</div>';
+    return;
+  }
+  visible.forEach(t=>list.appendChild(taskItem(t)));
+}
+function taskItem(t) {
+  const div=document.createElement('div'); div.className='task-item'; div.id='ti-'+t.id;
+  div.innerHTML=`<div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+    <div class="task-text ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${esc(t.text)}</div>
+    <div class="task-day">${esc(t.day)}</div>
+    <button class="sched-edit-btn" onclick="editTask('${t.id}')" title="Edit">✏</button>
+    <button class="task-del" onclick="deleteTask('${t.id}')">×</button>`;
+  return div;
+}
+function toggleTask(id) {
+  const t=state.tasks.find(t=>t.id===id); if(!t) return;
+  t.done=!t.done;
+  const el=document.getElementById('ti-'+id);
+  if(el){
+    el.querySelector('.task-check').className='task-check'+(t.done?' done':'');
+    el.querySelector('.task-check').textContent=t.done?'✓':'';
+    el.querySelector('.task-text').className='task-text'+(t.done?' done':'');
+  }
+  updateStats(); saveState();
+}
+function deleteTask(id) {
+  state.tasks=state.tasks.filter(t=>t.id!==id);
+  const el=document.getElementById('ti-'+id); if(el) el.remove();
+  updateStats(); saveState();
+}
+function editTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  const row = document.getElementById('ti-' + id);
+  if (!row) return;
+  const dayOpts = [...document.getElementById('task-day-sel').options]
+    .map(o => `<option value="${o.value}" ${o.value===t.day?'selected':''}>${o.text}</option>`).join('');
+  row.innerHTML = `<div class="sched-inline-form" style="width:100%">
+    <input id="te-tx-${id}" type="text" value="${esc(t.text)}" placeholder="Task" style="flex:1;min-width:120px">
+    <select id="te-dy-${id}" style="max-width:140px">${dayOpts}</select>
+    <button class="sched-save-btn"   onclick="saveTaskEdit('${id}')">Save</button>
+    <button class="sched-cancel-btn" onclick="cancelTaskEdit('${id}')">Cancel</button>
+  </div>`;
+  document.getElementById('te-tx-' + id)?.focus();
+}
+function saveTaskEdit(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  t.text = document.getElementById('te-tx-' + id)?.value.trim() || t.text;
+  t.day  = document.getElementById('te-dy-' + id)?.value || t.day;
+  buildTasks(); updateStats(); saveState();
+}
+function cancelTaskEdit(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  const row = document.getElementById('ti-' + id);
+  if (row) row.outerHTML = (() => { const tmp = taskItem(t); return tmp.outerHTML; })();
+  buildTasks();
+}
+function addTask() {
+  const text=document.getElementById('new-task').value.trim();
+  const day=document.getElementById('task-day-sel').value||'—';
+  if(!text) return;
+  const t={id:uid(),text,day,done:false};
+  state.tasks.push(t);
+  buildTasks(); // re-render respecting current filter
+  document.getElementById('new-task').value='';
+  updateStats(); saveState();
+}
+function buildDaySels() {
+  const opts=state.days.map(d=>`<option>${dayLabel(d)}</option>`).join('')+'<option>All days</option><option>Pre-show</option>';
+  document.getElementById('task-day-sel').innerHTML=opts;
+  document.getElementById('note-day-sel').innerHTML=opts;
+  // Notes filter: "All days" first (default), then each day, then Pre-show
+  const filterSel=document.getElementById('note-filter-sel');
+  if(filterSel){
+    const prev=filterSel.value;
+    const filterOpts='<option>All days</option>'+state.days.map(d=>`<option>${dayLabel(d)}</option>`).join('')+'<option>Pre-show</option>';
+    filterSel.innerHTML=filterOpts;
+    // restore prior selection if it still exists, else default to All days
+    if(prev && [...filterSel.options].some(o=>o.value===prev)) filterSel.value=prev;
+  }
+}
+
+// ════════════════════════════════
+// NOTES
+// ════════════════════════════════
+function saveNote() {
+  const txt=document.getElementById('note-input').value.trim();
+  const day=document.getElementById('note-day-sel').value;
+  if(!txt) return;
+  const n={id:uid(),txt,day,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+  state.notes.unshift(n); renderNotes();
+  document.getElementById('note-input').value='';
+  saveState(); // fire-and-forget
+}
+function renderNotes() {
+  const list=document.getElementById('notes-list');
+  const filter=document.getElementById('note-filter-sel')?.value || 'All days';
+  const notes = filter==='All days' ? state.notes : state.notes.filter(n=>n.day===filter);
+  if(!state.notes.length){ list.innerHTML='<div class="empty-state">No notes yet.</div>'; return; }
+  if(!notes.length){ list.innerHTML=`<div class="empty-state">No notes for ${esc(filter)}.</div>`; return; }
+  list.innerHTML=notes.map(n=>`
+    <div class="note-entry" id="ne-${n.id}">
+      <div class="note-meta">${esc(n.day)} · ${esc(n.time)}</div>
+      <div class="note-body">${esc(n.txt)}</div>
+      <button class="sched-edit-btn" onclick="editNote('${n.id}')" style="position:absolute;top:10px;right:22px" title="Edit">✏</button>
+      <button class="note-del" onclick="deleteNote('${n.id}')">×</button>
+    </div>`).join('');
+}
+function deleteNote(id) {
+  if (!confirm('Delete this note?')) return;
+  state.notes=state.notes.filter(n=>n.id!==id);
+  renderNotes(); saveState();
+}
+function editNote(id) {
+  const n = state.notes.find(n => n.id === id);
+  if (!n) return;
+  const entry = document.getElementById('ne-' + id);
+  if (!entry) return;
+  const dayOpts = [...document.getElementById('note-day-sel').options]
+    .map(o => `<option value="${o.value}" ${o.value===n.day?'selected':''}>${o.text}</option>`).join('');
+  entry.innerHTML = `
+    <div class="note-meta">${esc(n.day)} · ${esc(n.time)}</div>
+    <textarea id="nte-tx-${id}" style="width:100%;margin:6px 0;min-height:60px">${esc(n.txt)}</textarea>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="nte-dy-${id}" style="flex:1">${dayOpts}</select>
+      <button class="sched-save-btn"   onclick="saveNoteEdit('${id}')">Save</button>
+      <button class="sched-cancel-btn" onclick="cancelNoteEdit('${id}')">Cancel</button>
+    </div>`;
+  document.getElementById('nte-tx-' + id)?.focus();
+}
+function saveNoteEdit(id) {
+  const n = state.notes.find(n => n.id === id);
+  if (!n) return;
+  n.txt = document.getElementById('nte-tx-' + id)?.value.trim() || n.txt;
+  n.day = document.getElementById('nte-dy-' + id)?.value || n.day;
+  renderNotes(); saveState();
+}
+function cancelNoteEdit(id) {
+  renderNotes();
+}
+
+
+// ════════════════════════════════
+// GUEST LIST
+// ════════════════════════════════
+function buildGuestList() {
+  if (!state.guests) state.guests = [];
+  renderGuestList();
+}
+
+function renderGuestList() {
+  if (!state.guests) state.guests = [];
+  const tbody = document.getElementById('gl-tbody');
+  if (!tbody) return;
+
+  // Summary counts
+  const ga  = state.guests.filter(g => g.tier === 'ga').length;
+  const aa  = state.guests.filter(g => g.tier === 'aa').length;
+  const vip = state.guests.filter(g => g.tier === 'vip').length;
+  const tot = state.guests.length;
+  const summary = document.getElementById('gl-summary');
+  if (summary) summary.innerHTML = `
+    <div class="gl-stat"><span class="gl-tot">${tot}</span>Total</div>
+    <div class="gl-stat"><span class="gl-ga">${ga}</span>GA</div>
+    <div class="gl-stat"><span class="gl-aa">${aa}</span>AA</div>
+    <div class="gl-stat"><span class="gl-vip">${vip}</span>VIP</div>`;
+
+  if (!state.guests.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:1.5rem">No guests yet.</td></tr>';
+    return;
+  }
+
+  // Sort: VIP → AA → GA, then alpha
+  const tierOrder = { vip: 0, aa: 1, ga: 2 };
+  const sorted = [...state.guests].sort((a, b) => {
+    const td = tierOrder[a.tier] - tierOrder[b.tier];
+    if (td !== 0) return td;
+    return (a.last + a.first).localeCompare(b.last + b.first);
+  });
+
+  tbody.innerHTML = sorted.map(g => `
+    <tr id="gl-row-${g.id}">
+      <td style="font-weight:500">${esc(g.last)}, ${esc(g.first)}</td>
+      <td><span class="gl-tier tier-${g.tier}">${g.tier.toUpperCase()}</span></td>
+      <td><span class="gl-status st-${g.status}">${esc(g.status)}</span></td>
+      <td class="gl-note-cell" title="${esc(g.note)}">${esc(g.note)||'—'}</td>
+      <td>
+        <div class="gl-actions">
+          <button class="gl-edit-btn" onclick="editGuest('${g.id}')" title="Edit">✏</button>
+          <button class="gl-del-btn"  onclick="deleteGuest('${g.id}')">×</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function addGuest() {
+  const first  = document.getElementById('gl-first')?.value.trim();
+  const last   = document.getElementById('gl-last')?.value.trim();
+  const tier   = document.getElementById('gl-tier')?.value || 'ga';
+  const status = document.getElementById('gl-status')?.value || 'confirmed';
+  const note   = document.getElementById('gl-note')?.value.trim();
+  if (!first && !last) return;
+  if (!state.guests) state.guests = [];
+  state.guests.push({ id: uid(), first: first||'', last: last||'', tier, status, note: note||'' });
+  renderGuestList();
+  ['gl-first','gl-last','gl-note'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('gl-first')?.focus();
+  saveState();
+}
+
+function deleteGuest(id) {
+  state.guests = (state.guests||[]).filter(g => g.id !== id);
+  renderGuestList(); saveState();
+}
+
+function editGuest(id) {
+  const g = (state.guests||[]).find(g => g.id === id);
+  if (!g) return;
+  const row = document.getElementById('gl-row-' + id);
+  if (!row) return;
+  const tierOpts   = ['ga','aa','vip'].map(t => `<option value="${t}" ${t===g.tier?'selected':''}>${t.toUpperCase()}</option>`).join('');
+  const statusOpts = ['confirmed','pending','denied'].map(s => `<option value="${s}" ${s===g.status?'selected':''}>${s}</option>`).join('');
+  row.innerHTML = `
+    <td colspan="5">
+      <div class="sched-inline-form" style="flex-wrap:wrap;gap:6px;padding:4px 0">
+        <input id="ge-fn-${id}" type="text" value="${esc(g.first)}" placeholder="First" style="width:100px">
+        <input id="ge-ln-${id}" type="text" value="${esc(g.last)}"  placeholder="Last"  style="width:120px">
+        <select id="ge-ti-${id}" style="width:75px">${tierOpts}</select>
+        <select id="ge-st-${id}" style="width:110px">${statusOpts}</select>
+        <input id="ge-nt-${id}" type="text" value="${esc(g.note)}" placeholder="Note" style="flex:1;min-width:100px">
+        <button class="sched-save-btn"   onclick="saveGuestEdit('${id}')">Save</button>
+        <button class="sched-cancel-btn" onclick="renderGuestList()">Cancel</button>
+      </div>
+    </td>`;
+  document.getElementById('ge-fn-' + id)?.focus();
+}
+
+function saveGuestEdit(id) {
+  const g = (state.guests||[]).find(g => g.id === id);
+  if (!g) return;
+  g.first  = document.getElementById('ge-fn-' + id)?.value.trim() || g.first;
+  g.last   = document.getElementById('ge-ln-' + id)?.value.trim() || g.last;
+  g.tier   = document.getElementById('ge-ti-' + id)?.value || g.tier;
+  g.status = document.getElementById('ge-st-' + id)?.value || g.status;
+  g.note   = document.getElementById('ge-nt-' + id)?.value.trim();
+  renderGuestList(); saveState();
+}
+
+
+// ════════════════════════════════
+// FLIGHTS
+// ════════════════════════════════
+function buildFlights() {
+  if (!state.flights) state.flights = [];
+  renderFlights();
+}
+
+function flightCardHTML(f) {
+  return `<div class="flight-card" id="flc-${f.id}">
+    <div class="flight-top">
+      <span class="flight-pax">${esc(f.pax) || '—'}</span>
+      <span class="flight-airline">${esc(f.airline)}</span>
+      <div class="flight-actions">
+        <button class="flight-edit-btn" onclick="editFlight('${f.id}')" title="Edit">✏</button>
+        <button class="flight-del-btn" onclick="deleteFlight('${f.id}')">×</button>
+      </div>
+    </div>
+    <div class="flight-route">
+      <div class="flight-end">
+        <div class="flight-airport">${esc(f.from) || '???'}</div>
+        <div class="flight-time">${esc(f.depart)}</div>
+      </div>
+      <div class="flight-arrow"></div>
+      <div class="flight-end">
+        <div class="flight-airport">${esc(f.to) || '???'}</div>
+        <div class="flight-time">${esc(f.arrive)}</div>
+      </div>
+    </div>
+    ${(f.conf || f.note) ? `<div class="flight-meta">${f.conf ? `<span class="flight-conf">Conf: ${esc(f.conf)}</span>` : ''}${f.conf && f.note ? ' · ' : ''}${esc(f.note)}</div>` : ''}
+  </div>`;
+}
+
+function flightDayHeaderLabel(dateStr) {
+  // dateStr is 'YYYY-MM-DD' from the date input, or '' if none set
+  if (!dateStr) return 'No date set';
+  const d = parseLocalDate(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function renderFlights() {
+  if (!state.flights) state.flights = [];
+  const list = document.getElementById('flights-list');
+  if (!list) return;
+  if (!state.flights.length) {
+    list.innerHTML = '<div class="empty-state">No flights yet.</div>';
+    return;
+  }
+  // Group flights by their date string
+  const groups = {};
+  state.flights.forEach(f => {
+    const key = f.date || '';   // '' = no date set
+    (groups[key] = groups[key] || []).push(f);
+  });
+  // Sort the date keys chronologically; dateless flights ('') go last
+  const keys = Object.keys(groups).sort((a, b) => {
+    if (a === '') return 1;
+    if (b === '') return -1;
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+  // Build grouped HTML: a header per date, then that date's flight cards
+  list.innerHTML = keys.map(key =>
+    `<div class="flight-day-hdr">${flightDayHeaderLabel(key)}</div>` +
+    groups[key].map(flightCardHTML).join('')
+  ).join('');
+}
+
+function addFlight() {
+  const f = {
+    id: uid(),
+    date:    document.getElementById('fl-date').value,
+    pax:     document.getElementById('fl-pax').value.trim(),
+    airline: document.getElementById('fl-airline').value.trim(),
+    from:    document.getElementById('fl-from').value.trim().toUpperCase(),
+    to:      document.getElementById('fl-to').value.trim().toUpperCase(),
+    depart:  document.getElementById('fl-depart').value.trim(),
+    arrive:  document.getElementById('fl-arrive').value.trim(),
+    conf:    document.getElementById('fl-conf').value.trim(),
+    note:    document.getElementById('fl-note').value.trim(),
+  };
+  if (!f.pax && !f.airline && !f.from && !f.to) return;
+  if (!state.flights) state.flights = [];
+  state.flights.push(f);
+  renderFlights();
+  ['fl-date','fl-pax','fl-airline','fl-from','fl-to','fl-depart','fl-arrive','fl-conf','fl-note'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('fl-pax')?.focus();
+  saveState();
+}
+
+function deleteFlight(id) {
+  if (!confirm('Delete this flight?')) return;
+  state.flights = (state.flights||[]).filter(f => f.id !== id);
+  renderFlights(); saveState();
+}
+
+function editFlight(id) {
+  const f = (state.flights||[]).find(f => f.id === id);
+  if (!f) return;
+  const card = document.getElementById('flc-' + id);
+  if (!card) return;
+  card.innerHTML = `
+    <div class="loc-form-grid">
+      <input id="fe-date-${id}"    value="${esc(f.date)}"    type="date" class="loc-span2">
+      <input id="fe-pax-${id}"     value="${esc(f.pax)}"     placeholder="Passenger">
+      <input id="fe-airline-${id}" value="${esc(f.airline)}" placeholder="Airline + flight #">
+      <input id="fe-from-${id}"    value="${esc(f.from)}"    placeholder="From airport">
+      <input id="fe-to-${id}"      value="${esc(f.to)}"      placeholder="To airport">
+      <input id="fe-depart-${id}"  value="${esc(f.depart)}"  placeholder="Departs">
+      <input id="fe-arrive-${id}"  value="${esc(f.arrive)}"  placeholder="Arrives">
+      <input id="fe-conf-${id}"    value="${esc(f.conf)}"    placeholder="Confirmation #" class="loc-span2">
+      <input id="fe-note-${id}"    value="${esc(f.note)}"    placeholder="Note" class="loc-span2">
+    </div>
+    <div class="add-row" style="margin-top:8px">
+      <button class="sched-save-btn"   onclick="saveFlightEdit('${id}')">Save</button>
+      <button class="sched-cancel-btn" onclick="renderFlights()">Cancel</button>
+    </div>`;
+  document.getElementById('fe-pax-' + id)?.focus();
+}
+
+function saveFlightEdit(id) {
+  const f = (state.flights||[]).find(f => f.id === id);
+  if (!f) return;
+  f.date    = document.getElementById('fe-date-' + id)?.value || '';
+  f.pax     = document.getElementById('fe-pax-' + id)?.value.trim();
+  f.airline = document.getElementById('fe-airline-' + id)?.value.trim();
+  f.from    = document.getElementById('fe-from-' + id)?.value.trim().toUpperCase();
+  f.to      = document.getElementById('fe-to-' + id)?.value.trim().toUpperCase();
+  f.depart  = document.getElementById('fe-depart-' + id)?.value.trim();
+  f.arrive  = document.getElementById('fe-arrive-' + id)?.value.trim();
+  f.conf    = document.getElementById('fe-conf-' + id)?.value.trim();
+  f.note    = document.getElementById('fe-note-' + id)?.value.trim();
+  renderFlights(); saveState();
+}
+
+// ════════════════════════════════
+// STATS
+// ════════════════════════════════
+function updateStats() {
+  const done=state.tasks.filter(t=>t.done).length;
+  document.getElementById('s-tasks-display').textContent=done+'/'+state.tasks.length;
+  document.getElementById('s-contacts-display').textContent=state.contacts.length;
+}
+
+// ════════════════════════════════
+// TABS
+// ════════════════════════════════
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ════════════════════════════════
+// EXPORT
+// ════════════════════════════════
+function openExportModal()  { document.getElementById('export-modal').style.display='flex'; }
+function closeExportModal() { document.getElementById('export-modal').style.display='none'; }
+
+function generatePDF() {
+  const incItinerary  = document.getElementById('ex-itinerary').checked;
+  const incRos        = document.getElementById('ex-ros').checked;
+  const incLocations  = document.getElementById('ex-locations').checked;
+  const incFlights    = document.getElementById('ex-flights').checked;
+  const incContacts   = document.getElementById('ex-contacts').checked;
+  const incTasks      = document.getElementById('ex-tasks').checked;
+  const incNotes      = document.getElementById('ex-notes').checked;
+
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>${esc(state.name)} — Itinerary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:'DM Sans',sans-serif;font-size:13px;color:#f0f0f0;background:#0a0a0a;padding:40px;max-width:720px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h1{font-size:22px;font-weight:600;margin-bottom:4px;color:#b48aff}
+  .meta{font-size:12px;color:#888;margin-bottom:32px;font-family:'DM Mono',monospace}
+  h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#b48aff;margin:28px 0 10px;border-bottom:1px solid #2a2a2a;padding-bottom:6px}
+  h3{font-size:14px;font-weight:600;margin:20px 0 8px;color:#f0f0f0}
+  .row{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid #1c1c1c}
+  .row:last-child{border-bottom:none}
+  .time{font-family:'DM Mono',monospace;font-size:11px;color:#888;min-width:110px;padding-top:2px;white-space:nowrap}
+  .body{flex:1}
+  .title{font-size:13px;font-weight:500;margin-bottom:2px;color:#f0f0f0}
+  .sub{font-size:11px;color:#888}
+  .badge{display:inline-block;font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:6px;background:rgba(180,138,255,0.14);color:#b48aff;vertical-align:middle}
+  .contacts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .contact-card{border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;background:#111}
+  .contact-name{font-weight:500;font-size:13px;color:#f0f0f0}
+  .contact-role{font-size:11px;color:#888;margin-bottom:4px}
+  .contact-phone{font-family:'DM Mono',monospace;font-size:11px;color:#ccc}
+  .task-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1c1c1c}
+  .task-check{width:14px;height:14px;border:1.5px solid #444;border-radius:3px;flex-shrink:0}
+  .task-done .task-check{background:#b48aff;border-color:#b48aff}
+  .task-done .task-label{text-decoration:line-through;color:#555}
+  .task-label{font-size:13px;color:#f0f0f0}
+  .task-day{font-size:10px;color:#777;font-family:'DM Mono',monospace;margin-left:auto}
+  .note-block{padding:8px 0;border-bottom:1px solid #1c1c1c}
+  .note-meta{font-size:10px;color:#777;font-family:'DM Mono',monospace;margin-bottom:3px}
+  .note-text{font-size:13px;color:#ddd}
+  .footer{margin-top:40px;padding-top:16px;border-top:1px solid #2a2a2a;font-size:11px;color:#777;font-family:'DM Mono',monospace;display:flex;justify-content:space-between}
+  .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:6px}
+  .loc-field{}.loc-field.full{grid-column:span 2}
+  .lf-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#888;font-family:'DM Mono',monospace;margin-bottom:2px}
+  .lf-val{font-size:13px;color:#f0f0f0}
+  .loc-notes{font-size:12px;color:#999;margin-top:6px;padding-top:6px;border-top:1px solid #1c1c1c}
+  @media print{body{padding:24px}}
+</style></head><body>`;
+
+  const showStr = state.showDate ? ` · Show ${fmtDateSimple(state.showDate)}` : '';
+  html += `<h1>${esc(state.name)}</h1><div class="meta">${esc(state.artist)}${showStr} · TM: ${esc(state.tmName)} · ${state.days.length}-day run</div>`;
+
+  if (incItinerary && state.days.length) {
+    html += `<h2>Daily Itinerary</h2>`;
+    state.days.forEach(d => {
+      const key   = d.toDateString();
+      const items = state.schedules[key] || [];
+      const isShow = state.showDate && sameDay(d, state.showDate);
+      html += `<h3>${fmtDate(d)}${isShow?' — Show Day':''}</h3>`;
+      if (!items.length) { html += `<div class="sub" style="padding:6px 0;color:#777">No items.</div>`; }
+      else items.forEach(s => {
+        html += `<div class="row"><div class="time">${esc(s.time)}</div><div class="body"><div class="title">${esc(s.title)}<span class="badge">${s.badge.replace('b-','')}</span></div>${s.sub?`<div class="sub">${esc(s.sub)}</div>`:''}</div></div>`;
+      });
+    });
+  }
+
+  if (incRos && state.ros && state.ros.length) {
+    html += `<h2>Run of Show</h2>`;
+    state.ros.forEach(r => {
+      const dur = fmtDuration(minsDiff(parseMins(r.timeStart), parseMins(r.timeEnd)));
+      const timeStr = r.timeStart && r.timeEnd ? `${esc(r.timeStart)} – ${esc(r.timeEnd)}` : esc(r.timeStart)||esc(r.timeEnd)||'—';
+      html += `<div class="row"><div class="time">${timeStr}${dur?`<br><span style="font-size:10px;color:#999">${dur}</span>`:''}</div><div class="body"><div class="title">${esc(r.title)}<span class="badge">${r.type.replace('rt-','')}</span></div>${r.note?`<div class="sub">${esc(r.note)}</div>`:''}</div></div>`;
+    });
+  }
+
+  if (incFlights && state.flights && state.flights.length) {
+    html += `<h2>Flights</h2>`;
+    // Group by date, same as the app view
+    const fgroups = {};
+    state.flights.forEach(f => { const k = f.date || ''; (fgroups[k] = fgroups[k] || []).push(f); });
+    const fkeys = Object.keys(fgroups).sort((a,b) => a===''?1:b===''?-1:(a<b?-1:a>b?1:0));
+    fkeys.forEach(key => {
+      html += `<h3>${flightDayHeaderLabel(key)}</h3>`;
+      fgroups[key].forEach(f => {
+        const route = `${esc(f.from)||'???'} → ${esc(f.to)||'???'}`;
+        const times = [esc(f.depart), esc(f.arrive)].filter(Boolean).join('  →  ');
+        html += `<div class="row"><div class="time">${esc(f.pax)}</div><div class="body"><div class="title">${esc(f.airline)} &nbsp; ${route}</div><div class="sub">${times}${(f.conf)?` · Conf: ${esc(f.conf)}`:''}${f.note?` · ${esc(f.note)}`:''}</div></div></div>`;
+      });
+    });
+  }
+
+  if (incLocations && ((state.venues && state.venues.length) || (state.lodging && state.lodging.length))) {
+    html += `<h2>Locations</h2>`;
+    if (state.venues && state.venues.length) {
+      const dayOrder = (state.days||[]).map(d => dayLabel(d));
+      const rank = v => { const i = dayOrder.indexOf(v.day); return v.day && i>=0 ? i : 999; };
+      [...state.venues].sort((a,b)=>rank(a)-rank(b)).forEach(v => {
+        const dayTag = v.day ? ` <span style="font-size:11px;color:#888;font-weight:400">· ${esc(v.day)}</span>` : '';
+        html += `<h3>🏟 ${esc(v.name)}${dayTag}</h3><div class="loc-grid">`;
+        if (v.address)  html += `<div class="loc-field full"><div class="lf-label">Address</div><div class="lf-val">${esc(v.address)}</div></div>`;
+        if (v.contact)  html += `<div class="loc-field"><div class="lf-label">Venue contact</div><div class="lf-val">${esc(v.contact)}</div></div>`;
+        if (v.phone)    html += `<div class="loc-field"><div class="lf-label">Phone / email</div><div class="lf-val">${esc(v.phone)}</div></div>`;
+        if (v.loadin)   html += `<div class="loc-field"><div class="lf-label">Load-in</div><div class="lf-val">${esc(v.loadin)}</div></div>`;
+        if (v.capacity) html += `<div class="loc-field"><div class="lf-label">Capacity</div><div class="lf-val">${esc(v.capacity)}</div></div>`;
+        if (v.parking)  html += `<div class="loc-field"><div class="lf-label">Parking</div><div class="lf-val">${esc(v.parking)}</div></div>`;
+        if (v.greenrm)  html += `<div class="loc-field"><div class="lf-label">Green room</div><div class="lf-val">${esc(v.greenrm)}</div></div>`;
+        if (v.stage)    html += `<div class="loc-field full"><div class="lf-label">Stage specs</div><div class="lf-val">${esc(v.stage)}</div></div>`;
+        html += `</div>`;
+        if (v.notes) html += `<div class="loc-notes">${esc(v.notes)}</div>`;
+      });
+    }
+    if (state.lodging && state.lodging.length) {
+      state.lodging.forEach(l => {
+        html += `<h3>🏨 ${esc(l.name)}</h3><div class="loc-grid">`;
+        if (l.address)  html += `<div class="loc-field full"><div class="lf-label">Address</div><div class="lf-val">${esc(l.address)}</div></div>`;
+        if (l.checkin)  html += `<div class="loc-field"><div class="lf-label">Check-in</div><div class="lf-val">${esc(l.checkin)}</div></div>`;
+        if (l.checkout) html += `<div class="loc-field"><div class="lf-label">Check-out</div><div class="lf-val">${esc(l.checkout)}</div></div>`;
+        if (l.conf)     html += `<div class="loc-field full"><div class="lf-label">Confirmation #</div><div class="lf-val">${esc(l.conf)}</div></div>`;
+        html += `</div>`;
+        if (l.notes) html += `<div class="loc-notes">${esc(l.notes)}</div>`;
+      });
+    }
+  }
+
+  if (incContacts && state.contacts.length) {
+    html += `<h2>Contacts</h2><div class="contacts-grid">`;
+    state.contacts.forEach(c => {
+      html += `<div class="contact-card"><div class="contact-role">${esc(c.role)}</div><div class="contact-name">${esc(c.name)}</div>${c.phone?`<div class="contact-phone">${esc(c.phone)}</div>`:''}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (incTasks && state.tasks.length) {
+    html += `<h2>Tasks</h2>`;
+    state.tasks.forEach(t => {
+      html += `<div class="task-row${t.done?' task-done':''}"><div class="task-check"></div><div class="task-label">${esc(t.text)}</div><div class="task-day">${esc(t.day)}</div></div>`;
+    });
+  }
+
+  if (incNotes && state.notes.length) {
+    html += `<h2>Notes</h2>`;
+    state.notes.forEach(n => {
+      html += `<div class="note-block"><div class="note-meta">${esc(n.day)} · ${esc(n.time)}</div><div class="note-text">${esc(n.txt)}</div></div>`;
+    });
+  }
+
+  const now = new Date();
+  html += `<div class="footer"><span>Generated by // OFFSTAGE</span><span>${now.toLocaleDateString()} ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+  html += `<script>window.onload=function(){window.print();}<\/script></body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  closeExportModal();
+}
+
+// ════════════════════════════════
+// INIT
+// ════════════════════════════════
+
+// Expose functions to global scope (required because this is a module)
+Object.assign(window, {
+  showNewArtistForm, hideNewArtistForm, submitNewArtist, deleteArtist, openArtist,
+  showEditArtistForm, hideEditArtistForm, submitEditArtist,
+  showNewShowForm, setupBack, deleteShow, deleteCurrentShow, openShow,
+  showEditShowForm, hideEditShowForm, submitEditShow,
+  goHome, goToArtist, logout, doLogin,
+  launch,
+  switchTab, switchDay,
+  addSchedItem, deleteSchedItem, editSchedItem, saveSchedEdit, cancelSchedEdit,
+  editRosItem, saveRosEdit, cancelRosEdit,
+  editContact, saveContactEdit, cancelContactEdit,
+  addCrew, deleteCrew, toggleCrew,
+  editTask, saveTaskEdit, cancelTaskEdit, setTaskFilter, buildTaskFilterChips,
+  editNote, saveNoteEdit, cancelNoteEdit,
+  editVenue, saveVenueEdit, renderLocations,
+  editLodging, saveLodgingEdit,
+  addGuest, deleteGuest, editGuest, saveGuestEdit, renderGuestList,
+  addFlight, deleteFlight, editFlight, saveFlightEdit, renderFlights,
+  addRosItem, deleteRosItem,
+  toggleLocForm, addVenue, deleteVenue, addLodging, deleteLodging,
+  addContact, deleteContact,
+  toggleTask, deleteTask, addTask,
+  saveNote, deleteNote, renderNotes,
+  openExportModal, closeExportModal, generatePDF,
+});
+
+onAuthStateChanged(auth, async user => {
+  const _lo = document.getElementById('loading-overlay'); if (_lo) _lo.style.display = 'none';
+  if (user) {
+    const role = getRoleForEmail(user.email);
+    if (role) {
+      await handleAuthSuccess(user, role);
+    } else {
+      await signOut(auth);
+      showScreen('login-screen');
+    }
+  } else {
+    showScreen('login-screen');
+    setTimeout(() => { document.getElementById('login-email')?.focus(); }, 100);
+  }
+});
+</script>
+</body>
+</html>
