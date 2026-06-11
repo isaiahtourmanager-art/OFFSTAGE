@@ -922,7 +922,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 // reload so everyone is always running the latest code instead of a stale
 // cached copy. Format: YYYY.MM.DD-N (N = build number for that day).
 // ════════════════════════════════
-const APP_VERSION = '2026.06.02-4';
+const APP_VERSION = '2026.06.02-9';
 (function checkAppVersion() {
   try {
     const seen = localStorage.getItem('offstage-app-version');
@@ -1193,8 +1193,8 @@ async function getShowState(showId, force) {
     const snap = await getDoc(doc(db, 'shows', showId));
     if (!snap.exists()) return null;
     const s = snap.data();
-    s.days     = (s.days || []).map(d => new Date(d));
-    s.showDate  = s.showDate ? new Date(s.showDate) : null;
+    s.days     = (s.days || []).map(d => parseLocalDate(d));
+    s.showDate  = s.showDate ? parseLocalDate(s.showDate) : null;
     s.contacts  = s.contacts  || [];
     s.crew      = s.crew      || [];
     s.tasks     = s.tasks     || [];
@@ -1210,7 +1210,7 @@ async function getShowState(showId, force) {
   } catch (e) { console.error('getShowState failed:', e); throw e; }
 }
 async function saveShowState(showId, s) {
-  const toSave = { ...s, days: s.days.map(d => d.toISOString()), showDate: s.showDate ? s.showDate.toISOString() : null };
+  const toSave = { ...s, days: s.days.map(d => toLocalDateStr(d)), showDate: s.showDate ? toLocalDateStr(s.showDate) : null };
   _showStateCache[showId] = s;
   try {
     await setDoc(doc(db, 'shows', showId), toSave);
@@ -1304,7 +1304,7 @@ async function findShowForDate(targetDate) {
       // if showDate is set and is the target, it's certainly a match (and a show day).
       if (sm.showDate) {
         try {
-          const d = new Date(sm.showDate);
+          const d = parseLocalDate(sm.showDate);
           if (!isNaN(d) && d.toDateString() === target) {
             return { artistId: a.id, artist: a, showMeta: sm, isShowDay: true };
           }
@@ -1561,7 +1561,7 @@ async function renderHome() {
       for (const sh of shows) {
         // Prefer showDate stored on the lightweight index doc (no extra read).
         // Fall back to the full show doc only for legacy shows missing it.
-        let sd = sh.showDate ? new Date(sh.showDate) : undefined;
+        let sd = sh.showDate ? parseLocalDate(sh.showDate) : undefined;
         if (sd === undefined) {
           const saved = await getShowState(sh.id);
           sd = saved && saved.showDate ? saved.showDate : null;
@@ -1726,12 +1726,12 @@ async function showEditShowForm(showId) {
     if (saved.days && saved.days.length) {
       const first = saved.days[0];
       document.getElementById('sef-start-' + showId).value =
-        first.toISOString().slice(0,10);
+        toLocalDateStr(first);
     }
     document.getElementById('sef-days-' + showId).value = saved.days ? saved.days.length : 1;
     if (saved.showDate) {
       document.getElementById('sef-show-' + showId).value =
-        saved.showDate.toISOString().slice(0,10);
+        toLocalDateStr(saved.showDate);
     }
   }
   form.style.display = form.style.display === 'block' ? 'none' : 'block';
@@ -1786,7 +1786,7 @@ async function submitEditShow(showId) {
   const shows = await getShows(currentArtistId);
   const showMeta = shows.find(s => s.id === showId);
   if (showMeta) {
-    const newShowDateISO = saved.showDate ? saved.showDate.toISOString() : null;
+    const newShowDateISO = saved.showDate ? toLocalDateStr(saved.showDate) : null;
     if (showMeta.name !== name || showMeta.showDate !== newShowDateISO) {
       showMeta.name = name;
       showMeta.showDate = newShowDateISO;
@@ -1912,7 +1912,25 @@ function dayLabel(d) {
   const isShow = state && state.showDate && sameDay(d, state.showDate);
   return fmtDateSimple(d) + (isShow ? ' — Show' : '');
 }
-function parseLocalDate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+// Parse a date string into a LOCAL Date (no timezone shift). Handles both the
+// new plain 'YYYY-MM-DD' format and legacy full ISO strings ('...T06:00:00.000Z')
+// that older saves produced, so existing shows don't drift when re-read.
+function parseLocalDate(str) {
+  if (!str) return null;
+  // Take just the calendar-date portion (before any 'T'), then build it locally.
+  const datePart = String(str).split('T')[0];
+  const [y, m, d] = datePart.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+// Format a Date as a plain local 'YYYY-MM-DD' string — no UTC conversion, so a
+// show date stays on the same calendar day no matter the timezone.
+function toLocalDateStr(date) {
+  if (!date) return null;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 // Build <option> tags for a day picker. selected = currently chosen day label.
 function dayOptionTags(selected) {
   const days = (state && state.days) ? state.days : [];
@@ -1999,7 +2017,7 @@ async function launch() {
     currentArtist = artists.find(a => a.id === currentArtistId) || null;
   } catch (e) { currentArtist = null; }
 
-  await addShowDoc(currentArtistId, { id: showId, name, showDate: showDate ? showDate.toISOString() : null });
+  await addShowDoc(currentArtistId, { id: showId, name, showDate: showDate ? toLocalDateStr(showDate) : null });
   await saveState();
 
   buildApp();
@@ -3522,52 +3540,80 @@ function generatePDF() {
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body{font-family:'DM Sans',sans-serif;font-size:13px;color:#f0f0f0;background:#0a0a0a;padding:40px;max-width:720px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  h1{font-size:22px;font-weight:600;margin-bottom:4px;color:#b48aff}
-  .meta{font-size:12px;color:#888;margin-bottom:32px;font-family:'DM Mono',monospace}
-  h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#b48aff;margin:28px 0 10px;border-bottom:1px solid #2a2a2a;padding-bottom:6px}
-  h3{font-size:14px;font-weight:600;margin:20px 0 8px;color:#f0f0f0}
-  .row{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid #1c1c1c}
+  /* LIGHT / PAPER THEME for printing. Dark backgrounds either eat a whole ink
+     cartridge or (more often) get dropped by printers set to skip backgrounds,
+     which would leave near-invisible light text. Black-on-white prints on any
+     printer and reads cleanly. The on-screen app stays dark; only this export is light. */
+  body{font-family:'DM Sans',sans-serif;font-size:13px;color:#1a1a1a;background:#ffffff;padding:40px;max-width:720px;margin:0 auto}
+  h1{font-size:22px;font-weight:600;margin-bottom:4px;color:#6b3fd4}
+  .meta{font-size:12px;color:#666;margin-bottom:32px;font-family:'DM Mono',monospace}
+  h3{font-size:14px;font-weight:600;margin:20px 0 8px;color:#1a1a1a}
+  .row{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid #e2e2e2}
   .row:last-child{border-bottom:none}
-  .time{font-family:'DM Mono',monospace;font-size:11px;color:#888;min-width:110px;padding-top:2px;white-space:nowrap}
+  .time{font-family:'DM Mono',monospace;font-size:11px;color:#666;min-width:110px;padding-top:2px;white-space:nowrap}
   .body{flex:1}
-  .title{font-size:13px;font-weight:500;margin-bottom:2px;color:#f0f0f0}
-  .sub{font-size:11px;color:#888}
-  .badge{display:inline-block;font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:6px;background:rgba(180,138,255,0.14);color:#b48aff;vertical-align:middle}
+  .title{font-size:13px;font-weight:500;margin-bottom:2px;color:#1a1a1a}
+  .sub{font-size:11px;color:#666}
+  .badge{display:inline-block;font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:6px;background:#ede7fb;color:#6b3fd4;vertical-align:middle}
   .contacts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  .contact-card{border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;background:#111}
-  .contact-name{font-weight:500;font-size:13px;color:#f0f0f0}
-  .contact-role{font-size:11px;color:#888;margin-bottom:4px}
-  .contact-phone{font-family:'DM Mono',monospace;font-size:11px;color:#ccc}
-  .task-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1c1c1c}
-  .task-check{width:14px;height:14px;border:1.5px solid #444;border-radius:3px;flex-shrink:0}
-  .task-done .task-check{background:#b48aff;border-color:#b48aff}
-  .task-done .task-label{text-decoration:line-through;color:#555}
-  .task-label{font-size:13px;color:#f0f0f0}
-  .task-day{font-size:10px;color:#777;font-family:'DM Mono',monospace;margin-left:auto}
-  .note-block{padding:8px 0;border-bottom:1px solid #1c1c1c}
-  .note-meta{font-size:10px;color:#777;font-family:'DM Mono',monospace;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .contact-card{border:1px solid #ccc;border-radius:8px;padding:10px 12px;background:#f7f7f9}
+  .contact-name{font-weight:500;font-size:13px;color:#1a1a1a}
+  .contact-role{font-size:11px;color:#666;margin-bottom:4px}
+  .contact-phone{font-family:'DM Mono',monospace;font-size:11px;color:#333}
+  .task-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #e2e2e2}
+  .task-check{width:14px;height:14px;border:1.5px solid #999;border-radius:3px;flex-shrink:0}
+  .task-done .task-check{background:#6b3fd4;border-color:#6b3fd4}
+  .task-done .task-label{text-decoration:line-through;color:#999}
+  .task-label{font-size:13px;color:#1a1a1a}
+  .task-day{font-size:10px;color:#888;font-family:'DM Mono',monospace;margin-left:auto}
+  .note-block{padding:8px 0;border-bottom:1px solid #e2e2e2}
+  .note-meta{font-size:10px;color:#888;font-family:'DM Mono',monospace;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .note-author{display:inline-block;padding:2px 7px;border-radius:10px;color:#fff;font-size:9px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-family:'DM Mono',monospace;line-height:1.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .note-text{font-size:13px;color:#ddd}
-  .footer{margin-top:40px;padding-top:16px;border-top:1px solid #2a2a2a;font-size:11px;color:#777;font-family:'DM Mono',monospace;display:flex;justify-content:space-between}
+  .note-text{font-size:13px;color:#333}
+  .footer{margin-top:32px;padding-top:16px;border-top:1px solid #ccc;font-size:11px;color:#888;font-family:'DM Mono',monospace;display:flex;justify-content:space-between;break-before:avoid;page-break-before:avoid;break-inside:avoid;page-break-inside:avoid}
   .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:6px}
   .loc-field{}.loc-field.full{grid-column:span 2}
   .lf-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#888;font-family:'DM Mono',monospace;margin-bottom:2px}
-  .lf-val{font-size:13px;color:#f0f0f0}
-  .loc-notes{font-size:12px;color:#999;margin-top:6px;padding-top:6px;border-top:1px solid #1c1c1c}
+  .lf-val{font-size:13px;color:#1a1a1a}
+  .loc-notes{font-size:12px;color:#555;margin-top:6px;padding-top:6px;border-top:1px solid #e2e2e2}
+  .day-row{border-bottom:1px solid #e2e2e2}
+  .time-cell{color:#666}
 
-  /* PAGE BREAKS — let sections flow across pages naturally, but never split
-     an individual row, card, or grid in half. Headers stay attached to the
-     content immediately following them so they don't end up orphaned. */
+  /* PAGE BREAKS — hybrid layout. The visually heavy sections (Itinerary,
+     Locations, Contacts) each start on their own page. The short list sections
+     (Run of Show, Flights, Tasks, Notes) flow together to fill pages instead of
+     wasting paper. Individual rows/cards never split across a page boundary. */
   h2, h3 { break-after: avoid; page-break-after: avoid; }
   .row,
   .contact-card,
+  .contact-tr,
   .task-row,
   .note-block,
+  .loc-block,
   .loc-grid,
   .loc-notes {
     break-inside: avoid; page-break-inside: avoid;
   }
+  .loc-block { margin-bottom: 18px; }
+
+  /* Stronger section headers so two sections sharing a page still read as
+     clearly separate blocks. */
+  h2 { font-size:15px; font-weight:600; text-transform:uppercase; letter-spacing:.1em;
+       color:#6b3fd4; margin:34px 0 14px; border-bottom:2px solid #6b3fd4; padding-bottom:8px; }
+  h2:first-of-type { margin-top:0; }
+
+  /* Per-day itinerary tables. The <thead> day header auto-repeats at the top
+     of every page a day spans, so a long day never loses its date label. */
+  .day-table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+  .day-table thead { display:table-header-group; } /* repeat header across pages */
+  .day-head { font-size:14px; font-weight:600; color:#1a1a1a; text-align:left;
+    padding:14px 0 6px; }
+  .day-row { border-bottom:1px solid #e2e2e2; break-inside:avoid; page-break-inside:avoid; }
+  .day-row td { padding:8px 0; vertical-align:top; }
+  .time-cell { font-family:'DM Mono',monospace; font-size:11px; color:#666;
+    width:120px; white-space:nowrap; padding-right:12px; }
+  .body-cell { font-size:13px; }
+
   @media print{
     body{padding:24px}
     @page { margin: 16mm 12mm 18mm; }
@@ -3583,11 +3629,18 @@ function generatePDF() {
       const key   = d.toDateString();
       const items = state.schedules[key] || [];
       const isShow = state.showDate && sameDay(d, state.showDate);
-      html += `<h3>${fmtDate(d)}${isShow?' — Show Day':''}</h3>`;
-      if (!items.length) { html += `<div class="sub" style="padding:6px 0;color:#777">No items.</div>`; }
-      else items.forEach(s => {
-        html += `<div class="row"><div class="time">${esc(s.time)}</div><div class="body"><div class="title">${esc(s.title)}<span class="badge">${s.badge.replace('b-','')}</span></div>${s.sub?`<div class="sub">${esc(s.sub)}</div>`:''}</div></div>`;
-      });
+      const dayTitle = `${fmtDate(d)}${isShow?' — Show Day':''}`;
+      // Each day is its own <table>. The browser repeats <thead> at the top of
+      // every page the table spans, so a long day keeps its header on page 2.
+      html += `<table class="day-table"><thead><tr><th colspan="2"><div class="day-head">${esc(dayTitle)}</div></th></tr></thead><tbody>`;
+      if (!items.length) {
+        html += `<tr><td colspan="2"><div class="sub" style="padding:6px 0;color:#777">No items.</div></td></tr>`;
+      } else {
+        items.forEach(s => {
+          html += `<tr class="day-row"><td class="time-cell">${esc(s.time)}</td><td class="body-cell"><div class="title">${esc(s.title)}<span class="badge">${s.badge.replace('b-','')}</span></div>${s.sub?`<div class="sub">${esc(s.sub)}</div>`:''}</td></tr>`;
+        });
+      }
+      html += `</tbody></table>`;
     });
   }
 
@@ -3607,23 +3660,24 @@ function generatePDF() {
     state.flights.forEach(f => { const k = f.date || ''; (fgroups[k] = fgroups[k] || []).push(f); });
     const fkeys = Object.keys(fgroups).sort((a,b) => a===''?1:b===''?-1:(a<b?-1:a>b?1:0));
     fkeys.forEach(key => {
-      html += `<h3>${flightDayHeaderLabel(key)}</h3>`;
+      html += `<table class="day-table"><thead><tr><th colspan="2"><div class="day-head">${esc(flightDayHeaderLabel(key))}</div></th></tr></thead><tbody>`;
       fgroups[key].forEach(f => {
         const route = `${esc(f.from)||'???'} → ${esc(f.to)||'???'}`;
         const times = [esc(f.depart), esc(f.arrive)].filter(Boolean).join('  →  ');
-        html += `<div class="row"><div class="time">${esc(f.pax)}</div><div class="body"><div class="title">${esc(f.airline)} &nbsp; ${route}</div><div class="sub">${times}${(f.conf)?` · Conf: ${esc(f.conf)}`:''}${f.note?` · ${esc(f.note)}`:''}</div></div></div>`;
+        html += `<tr class="day-row"><td class="time-cell">${esc(f.pax)}</td><td class="body-cell"><div class="title">${esc(f.airline)} &nbsp; ${route}</div><div class="sub">${times}${(f.conf)?` · Conf: ${esc(f.conf)}`:''}${f.note?` · ${esc(f.note)}`:''}</div></td></tr>`;
       });
+      html += `</tbody></table>`;
     });
   }
 
   if (incLocations && ((state.venues && state.venues.length) || (state.lodging && state.lodging.length))) {
-    html += `<h2>Locations</h2>`;
+    html += `<h2 class="page-break">Locations</h2>`;
     if (state.venues && state.venues.length) {
       const dayOrder = (state.days||[]).map(d => dayLabel(d));
       const rank = v => { const i = dayOrder.indexOf(v.day); return v.day && i>=0 ? i : 999; };
       [...state.venues].sort((a,b)=>rank(a)-rank(b)).forEach(v => {
         const dayTag = v.day ? ` <span style="font-size:11px;color:#888;font-weight:400">· ${esc(v.day)}</span>` : '';
-        html += `<h3>🏟 ${esc(v.name)}${dayTag}</h3><div class="loc-grid">`;
+        html += `<div class="loc-block"><h3>🏟 ${esc(v.name)}${dayTag}</h3><div class="loc-grid">`;
         if (v.address)  html += `<div class="loc-field full"><div class="lf-label">Address</div><div class="lf-val">${esc(v.address)}</div></div>`;
         if (v.contact)  html += `<div class="loc-field"><div class="lf-label">Venue contact</div><div class="lf-val">${esc(v.contact)}</div></div>`;
         if (v.phone)    html += `<div class="loc-field"><div class="lf-label">Phone / email</div><div class="lf-val">${esc(v.phone)}</div></div>`;
@@ -3634,27 +3688,33 @@ function generatePDF() {
         if (v.stage)    html += `<div class="loc-field full"><div class="lf-label">Stage specs</div><div class="lf-val">${esc(v.stage)}</div></div>`;
         html += `</div>`;
         if (v.notes) html += `<div class="loc-notes">${esc(v.notes)}</div>`;
+        html += `</div>`;
       });
     }
     if (state.lodging && state.lodging.length) {
       state.lodging.forEach(l => {
-        html += `<h3>🏨 ${esc(l.name)}</h3><div class="loc-grid">`;
+        html += `<div class="loc-block"><h3>🏨 ${esc(l.name)}</h3><div class="loc-grid">`;
         if (l.address)  html += `<div class="loc-field full"><div class="lf-label">Address</div><div class="lf-val">${esc(l.address)}</div></div>`;
         if (l.checkin)  html += `<div class="loc-field"><div class="lf-label">Check-in</div><div class="lf-val">${esc(l.checkin)}</div></div>`;
         if (l.checkout) html += `<div class="loc-field"><div class="lf-label">Check-out</div><div class="lf-val">${esc(l.checkout)}</div></div>`;
         if (l.conf)     html += `<div class="loc-field full"><div class="lf-label">Confirmation #</div><div class="lf-val">${esc(l.conf)}</div></div>`;
         html += `</div>`;
         if (l.notes) html += `<div class="loc-notes">${esc(l.notes)}</div>`;
+        html += `</div>`;
       });
     }
   }
 
   if (incContacts && state.contacts.length) {
-    html += `<h2>Contacts</h2><div class="contacts-grid">`;
-    state.contacts.forEach(c => {
-      html += `<div class="contact-card"><div class="contact-role">${esc(c.role)}</div><div class="contact-name">${esc(c.name)}</div>${c.phone?`<div class="contact-phone">${esc(c.phone)}</div>`:''}</div>`;
-    });
-    html += `</div>`;
+    html += `<h2 class="page-break">Contacts</h2>`;
+    html += `<table class="day-table"><tbody>`;
+    // two cards per table row
+    for (let i = 0; i < state.contacts.length; i += 2) {
+      const cardHTML = c => c ? `<div class="contact-card"><div class="contact-role">${esc(c.role)}</div><div class="contact-name">${esc(c.name)}</div>${c.phone?`<div class="contact-phone">${esc(c.phone)}</div>`:''}</div>` : '';
+      const a = state.contacts[i], b = state.contacts[i+1];
+      html += `<tr class="contact-tr"><td style="width:50%;padding:5px 5px 5px 0;vertical-align:top">${cardHTML(a)}</td><td style="width:50%;padding:5px 0 5px 5px;vertical-align:top">${cardHTML(b)}</td></tr>`;
+    }
+    html += `</tbody></table>`;
   }
 
   if (incTasks && state.tasks.length) {
